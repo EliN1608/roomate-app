@@ -1,0 +1,194 @@
+.onboarding-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  max-width: 480px;
+  margin: 80px auto;
+  padding: 0 var(--spacing-md);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.onboarding-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: right; /* Right aligned in Hebrew RTL */
+  margin: 0;
+  letter-spacing: -1px;
+}
+
+/* 2. Black Card (#0F0F0F) */
+.onboarding-card {
+  background-color: var(--bg-surface); /* #0F0F0F */
+  border-radius: var(--radius-card); /* 24px */
+  padding: 28px;
+  color: var(--text-on-dark);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  box-sizing: border-box;
+}
+
+/* Tabs: Create / Join */
+.onboarding-tabs {
+  display: flex;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.onboarding-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  padding: var(--spacing-sm) 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  text-align: center;
+}
+
+.onboarding-tab:hover {
+  color: var(--text-on-dark);
+}
+
+/* Active tab: lime underline */
+.onboarding-tab.active {
+  color: var(--accent); /* Lime text */
+}
+
+.onboarding-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1.5px;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  background-color: var(--accent); /* Lime underline */
+  border-radius: 999px;
+}
+
+.onboarding-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.onboarding-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.onboarding-label {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-on-dark);
+}
+
+.onboarding-input {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-input); /* 12px */
+  padding: 12px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--text-on-dark);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.onboarding-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.code-input-field {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* Lime Button */
+.onboarding-btn {
+  background-color: var(--accent); /* Lime bg */
+  color: var(--bg-surface); /* Black text */
+  border: none;
+  border-radius: var(--radius-btn); /* 14px */
+  padding: 14px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.onboarding-btn:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.onboarding-btn:active {
+  transform: translateY(0);
+}
+
+/* Nested dark card: invite code */
+.nested-code-card {
+  background-color: var(--bg-surface-mid); /* #1C1C1C */
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+  box-sizing: border-box;
+}
+
+.invite-code-label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.invite-code-value {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--accent); /* Lime invite code */
+  letter-spacing: 2px;
+  line-height: 1.2;
+}
+
+.invite-code-subtitle {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* 3. Footer link button */
+.onboarding-footer-link-btn {
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+  align-self: center;
+}
+
+.onboarding-footer-link-btn:hover {
+  color: var(--text-primary);
+}

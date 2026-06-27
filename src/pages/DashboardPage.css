@@ -1,0 +1,243 @@
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* 1. Balance Card */
+.balance-card {
+  background-color: var(--bg-surface); /* #0F0F0F */
+  border-radius: var(--radius-card); /* 24px */
+  padding: 24px;
+  color: var(--text-on-dark); /* #FFFFFF */
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+}
+
+.balance-label {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent); /* #C7FF2E */
+  letter-spacing: 0.5px;
+}
+
+.balance-title {
+  font-family: var(--font-mono);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.balance-subtitle {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-muted); /* #888888 */
+  margin-bottom: var(--spacing-sm);
+}
+
+.balance-btn {
+  background-color: var(--accent); /* #C7FF2E */
+  color: var(--bg-surface); /* #0F0F0F */
+  border: none;
+  border-radius: var(--radius-btn); /* 14px */
+  padding: 12px 24px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.balance-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.balance-btn:active {
+  transform: translateY(0);
+}
+
+/* 2. Metrics Cards */
+.metrics-row {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.metric-card {
+  flex: 1;
+  background-color: #FFFFFF;
+  border: 1.5px solid var(--bg-surface); /* 1.5px solid #0F0F0F */
+  border-radius: var(--radius-card); /* 24px */
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.metric-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted); /* #888888 */
+}
+
+.metric-value {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary); /* #0F0F0F */
+}
+
+/* 3. Recent Expenses Section */
+.expenses-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.view-all-link {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.view-all-link:hover {
+  color: var(--text-primary);
+}
+
+.expenses-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.expense-row-card {
+  background-color: #FFFFFF;
+  border: 1.5px solid var(--bg-surface); /* 1.5px solid #0F0F0F */
+  border-radius: 16px;
+  padding: 14px var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+}
+
+.expense-icon-square {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: var(--accent); /* Lime green bg */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.expense-info {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.expense-name {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.expense-date {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.expense-amount {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* 4. CTA Button */
+.cta-button-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--accent); /* #C7FF2E */
+  color: var(--bg-surface); /* #0F0F0F */
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  padding: 16px;
+  border-radius: var(--radius-btn); /* 14px */
+  box-shadow: 0 4px 14px rgba(199, 255, 46, 0.25);
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.cta-button-link:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.cta-button-link:active {
+  transform: translateY(0);
+}
+
+/* 5. Dashed Widget Placeholder */
+.dashed-widget {
+  border: 2px dashed rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-card); /* 24px */
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: rgba(0, 0, 0, 0.01);
+}
+
+.dashed-widget:hover {
+  border-color: var(--text-primary);
+  background-color: rgba(0, 0, 0, 0.03);
+  color: var(--text-primary);
+}
+
+.dashed-widget-text {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+}

@@ -1,14 +1,15 @@
 :root {
   --bg-primary: #F5F5F5;
-  --bg-surface-dark: #0F0F0F;
+  --bg-surface: #0F0F0F;
   --bg-surface-mid: #1C1C1C;
   --accent: #C7FF2E;
-  --accent-soft: rgba(199, 255, 46, 0.2);
+  --accent-soft: rgba(199, 255, 46, 0.13);
   --text-primary: #0F0F0F;
   --text-on-dark: #FFFFFF;
   --text-muted: #888888;
   --error: #FF4444;
   --success: #4ADE80;
+  --border: rgba(0, 0, 0, 0.08);
   
   /* Border Radii */
   --radius-card: 24px;

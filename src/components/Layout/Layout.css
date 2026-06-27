@@ -1,0 +1,40 @@
+.layout-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+
+.layout-viewport {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* Prevents overflow issues in flex children */
+}
+
+.layout-content {
+  flex-grow: 1;
+  padding-top: calc(64px + var(--spacing-md)); /* Clear fixed Navbar and add spacing */
+  padding-bottom: 88px; /* Height + padding space for BottomNav on mobile/tablet */
+  padding-inline: var(--spacing-lg);
+  padding-block-end: var(--spacing-xl);
+  box-sizing: border-box;
+  min-height: 100vh;
+  transition: all 0.2s ease;
+}
+
+/* Responsive adjustments */
+@media (min-width: 1024px) {
+  .layout-content {
+    margin-right: 240px; /* Offset for fixed right Sidebar */
+    width: calc(100% - 240px); /* Constrain width to prevent overflow and shift */
+    padding-bottom: var(--spacing-xl); /* Reset bottom padding (no BottomNav on desktop) */
+  }
+}
+
+@media (max-width: 767px) {
+  .layout-content {
+    padding-inline: var(--spacing-md);
+  }
+}

@@ -14,13 +14,13 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Unwrapped authentication and onboarding routes */}
+        {/* Unwrapped public and onboarding routes */}
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/onboarding" element={<OnboardingPage />} />
 
         {/* Layout-wrapped application routes */}
         <Route element={<Layout><Outlet /></Layout>}>
-          <Route path="/" element={<LandingPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           {/* Support both /expenses and /expenses/add to resolve navigation targets */}
           <Route path="/expenses" element={<AddExpensePage />} />

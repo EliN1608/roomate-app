@@ -6,117 +6,117 @@ export default function OnboardingPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('create'); // 'create' or 'join'
   const [apartmentName, setApartmentName] = useState('');
-  const [inviteCodeInput, setInviteCodeInput] = useState('');
-  const [createdCode] = useState('AB72KX');
+  const [inviteCode, setInviteCode] = useState('');
 
-  const handleCreateApartment = (e) => {
+  const handleCreate = (e) => {
     e.preventDefault();
     if (!apartmentName.trim()) {
       alert('נא להזין שם דירה');
       return;
     }
-    alert(`הדירה "${apartmentName}" נוצרה בהצלחה! קוד הזמנה: ${createdCode}`);
+    alert(`דירת "${apartmentName}" נוצרה בהצלחה! קוד ההזמנה שלך: AB72KX`);
     navigate('/dashboard');
   };
 
-  const handleJoinApartment = (e) => {
+  const handleJoin = (e) => {
     e.preventDefault();
-    if (!inviteCodeInput.trim()) {
+    if (!inviteCode.trim()) {
       alert('נא להזין קוד הזמנה');
       return;
     }
-    alert(`הצטרפת בהצלחה לדירה עם הקוד ${inviteCodeInput.trim()}!`);
+    alert(`הצטרפת בהצלחה לדירה עם הקוד: ${inviteCode}`);
     navigate('/dashboard');
   };
 
   return (
-    <div className="onboarding-container" id="onboarding-page">
-      {/* 1. Page Title */}
-      <h1 className="onboarding-title">בואו נתחיל</h1>
+    <div className="onboarding-page-container" id="onboarding-page">
+      {/* 1. Top Logo */}
+      <header className="onboarding-header">
+        <span className="onboarding-logo">RooMate</span>
+      </header>
 
-      {/* 2. Black Card Wrapper */}
-      <div className="onboarding-card">
-        {/* Tabs for switching Create / Join */}
-        <div className="onboarding-tabs">
+      {/* 2. Titles */}
+      <div className="onboarding-titles-section">
+        <h1 className="onboarding-page-title">בואו נתחיל</h1>
+        <p className="onboarding-page-subtitle">כל מגורים משותפים מוצלחים מתחילים בכלל אחד משותף</p>
+      </div>
+
+      {/* 3. Main Black Card */}
+      <div className="onboarding-black-card">
+        {/* Tab Switcher */}
+        <div className="onboarding-tab-switcher">
           <button
             type="button"
-            className={`onboarding-tab ${activeTab === 'create' ? 'active' : ''}`}
+            className={`onboarding-tab-btn ${activeTab === 'create' ? 'active' : ''}`}
             onClick={() => setActiveTab('create')}
           >
             יצירת דירה
           </button>
           <button
             type="button"
-            className={`onboarding-tab ${activeTab === 'join' ? 'active' : ''}`}
+            className={`onboarding-tab-btn ${activeTab === 'join' ? 'active' : ''}`}
             onClick={() => setActiveTab('join')}
           >
             הצטרפות לדירה
           </button>
         </div>
 
+        {/* Tab Content */}
         {activeTab === 'create' ? (
-          <form onSubmit={handleCreateApartment} className="onboarding-form">
-            <div className="onboarding-group">
-              <label className="onboarding-label" htmlFor="apt-name">שם הדירה</label>
+          <form onSubmit={handleCreate} className="onboarding-tab-form">
+            <div className="onboarding-field-group">
+              <label className="onboarding-field-label" htmlFor="create-apt-name">שם הדירה</label>
               <input
-                id="apt-name"
+                id="create-apt-name"
                 type="text"
-                className="onboarding-input"
-                placeholder="למשל: דירה ברחוב הרצל..."
+                className="onboarding-field-input"
+                placeholder="לדוגמה: דירת הרצל / בית החלומות"
                 value={apartmentName}
                 onChange={(e) => setApartmentName(e.target.value)}
               />
             </div>
 
-            <button type="submit" className="onboarding-btn">
+            <button type="submit" className="onboarding-submit-btn">
               צור דירה חדשה
             </button>
 
-            {/* Nested dark card: invite code */}
-            <div className="nested-code-card">
-              <div className="invite-code-label">קוד הזמנה לדירה החדשה:</div>
-              <div className="invite-code-value">{createdCode}</div>
-              <div className="invite-code-subtitle">שתפו את הקוד עם השותפים שלכם</div>
+            {/* Nested Dark Card */}
+            <div className="nested-onboarding-card">
+              <div className="nested-card-label">לאחר היצירה תקבלו קוד הזמנה</div>
+              <div className="nested-card-code">AB72KX</div>
+              <div className="nested-card-subtext">שתפו את הקוד עם השותפים שלכם</div>
             </div>
           </form>
         ) : (
-          <form onSubmit={handleJoinApartment} className="onboarding-form">
-            <div className="onboarding-group">
-              <label className="onboarding-label" htmlFor="invite-code">קוד הזמנה</label>
+          <form onSubmit={handleJoin} className="onboarding-tab-form">
+            <div className="onboarding-field-group">
+              <label className="onboarding-field-label" htmlFor="join-invite-code">קוד הזמנה</label>
               <input
-                id="invite-code"
+                id="join-invite-code"
                 type="text"
-                className="onboarding-input code-input-field"
-                placeholder="למשל: AB72KX"
-                value={inviteCodeInput}
-                onChange={(e) => setInviteCodeInput(e.target.value)}
+                className="onboarding-field-input code-mono-field"
+                placeholder="הזינו את קוד ההזמנה"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value)}
               />
             </div>
 
-            <button type="submit" className="onboarding-btn">
-              הצטרף לדירה
+            <button type="submit" className="onboarding-submit-btn">
+              הצטרפו לדירה
             </button>
           </form>
         )}
       </div>
 
-      {/* 3. Footer link */}
+      {/* 4. Footer Link */}
       {activeTab === 'create' ? (
-        <button
-          type="button"
-          className="onboarding-footer-link-btn"
-          onClick={() => setActiveTab('join')}
-        >
-          יש לכם כבר קוד הזמנה? לחצו כאן
-        </button>
+        <p className="onboarding-footer-text-link">
+          כבר יש לכם קוד הזמנה? <button type="button" className="onboarding-link-action" onClick={() => setActiveTab('join')}>לחצו כאן</button>
+        </p>
       ) : (
-        <button
-          type="button"
-          className="onboarding-footer-link-btn"
-          onClick={() => setActiveTab('create')}
-        >
-          רוצים ליצור דירה חדשה? לחצו כאן
-        </button>
+        <p className="onboarding-footer-text-link">
+          רוצים ליצור דירה חדשה? <button type="button" className="onboarding-link-action" onClick={() => setActiveTab('create')}>לחצו כאן</button>
+        </p>
       )}
     </div>
   );

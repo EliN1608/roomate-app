@@ -1,44 +1,78 @@
-.onboarding-container {
+.onboarding-page-container {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
-  max-width: 480px;
-  margin: 80px auto;
-  padding: 0 var(--spacing-md);
-  width: 100%;
+  background-color: var(--bg-primary); /* #F5F5F5 */
+  color: var(--text-primary); /* #0F0F0F */
+  min-height: 100vh;
   box-sizing: border-box;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 40px var(--spacing-md) 60px;
 }
 
-.onboarding-title {
+/* 1. Header Logo */
+.onboarding-header {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start; /* Flows to the right-most edge under RTL */
+  margin-bottom: 24px;
+}
+
+.onboarding-logo {
   font-family: var(--font-display);
-  font-size: 32px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text-primary);
-  text-align: right; /* Right aligned in Hebrew RTL */
+  letter-spacing: -0.5px;
+}
+
+/* 2. Titles Section */
+.onboarding-titles-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  text-align: right; /* Right-aligned in RTL */
+  margin-bottom: 32px;
+}
+
+.onboarding-page-title {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--text-primary);
   margin: 0;
   letter-spacing: -1px;
 }
 
-/* 2. Black Card (#0F0F0F) */
-.onboarding-card {
+.onboarding-page-subtitle {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--text-muted); /* Muted */
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* 3. Main Black Card (#0F0F0F) */
+.onboarding-black-card {
   background-color: var(--bg-surface); /* #0F0F0F */
   border-radius: var(--radius-card); /* 24px */
-  padding: 28px;
+  padding: 32px;
   color: var(--text-on-dark);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
   box-sizing: border-box;
+  width: 100%;
 }
 
-/* Tabs: Create / Join */
-.onboarding-tabs {
+/* Tab Switcher */
+.onboarding-tab-switcher {
   display: flex;
   border-bottom: 1.5px solid rgba(255, 255, 255, 0.08);
 }
 
-.onboarding-tab {
+.onboarding-tab-btn {
   flex: 1;
   background: transparent;
   border: none;
@@ -53,73 +87,78 @@
   text-align: center;
 }
 
-.onboarding-tab:hover {
+.onboarding-tab-btn:hover {
   color: var(--text-on-dark);
 }
 
-/* Active tab: lime underline */
-.onboarding-tab.active {
-  color: var(--accent); /* Lime text */
+/* Active tab: lime underline, white text bold */
+.onboarding-tab-btn.active {
+  color: var(--text-on-dark); /* White text bold */
 }
 
-.onboarding-tab.active::after {
+.onboarding-tab-btn.active::after {
   content: '';
   position: absolute;
   bottom: -1.5px;
   left: 0;
   right: 0;
   height: 2.5px;
-  background-color: var(--accent); /* Lime underline */
+  background-color: var(--accent); /* Lime underline (#C7FF2E) */
   border-radius: 999px;
 }
 
-.onboarding-form {
+/* Tab form layout */
+.onboarding-tab-form {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
 }
 
-.onboarding-group {
+.onboarding-field-group {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
 }
 
-.onboarding-label {
+.onboarding-field-label {
   font-family: var(--font-display);
   font-size: 13px;
   font-weight: 700;
-  color: var(--text-on-dark);
+  color: var(--text-on-dark); /* White label */
+  text-align: right;
 }
 
-.onboarding-input {
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1.5px solid rgba(255, 255, 255, 0.1);
+.onboarding-field-input {
+  background-color: var(--bg-surface-mid); /* Dark bg #1C1C1C */
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-input); /* 12px */
   padding: 12px;
   font-family: var(--font-body);
   font-size: 15px;
-  color: var(--text-on-dark);
+  color: var(--text-on-dark); /* White text */
   box-sizing: border-box;
   width: 100%;
 }
 
-.onboarding-input:focus {
-  outline: none;
-  border-color: var(--accent);
-  background-color: rgba(255, 255, 255, 0.08);
+.onboarding-field-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
 }
 
-.code-input-field {
+.onboarding-field-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.code-mono-field {
   font-family: var(--font-mono);
   text-transform: uppercase;
   letter-spacing: 2px;
 }
 
-/* Lime Button */
-.onboarding-btn {
-  background-color: var(--accent); /* Lime bg */
-  color: var(--bg-surface); /* Black text */
+/* Lime button */
+.onboarding-submit-btn {
+  background-color: var(--accent); /* Lime #C7FF2E */
+  color: var(--bg-surface); /* Black #0F0F0F */
   border: none;
   border-radius: var(--radius-btn); /* 14px */
   padding: 14px;
@@ -128,67 +167,78 @@
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
+  width: 100%;
   text-align: center;
 }
 
-.onboarding-btn:hover {
+.onboarding-submit-btn:hover {
   opacity: 0.95;
   transform: translateY(-1px);
 }
 
-.onboarding-btn:active {
+.onboarding-submit-btn:active {
   transform: translateY(0);
 }
 
-/* Nested dark card: invite code */
-.nested-code-card {
+/* Nested dark card (#1C1C1C) */
+.nested-onboarding-card {
   background-color: var(--bg-surface-mid); /* #1C1C1C */
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 16px;
   padding: var(--spacing-md);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-xs);
-  margin-top: var(--spacing-xs);
   box-sizing: border-box;
+  margin-top: var(--spacing-xs);
 }
 
-.invite-code-label {
+.nested-card-label {
   font-family: var(--font-body);
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--text-muted); /* Muted */
+  text-align: center;
 }
 
-.invite-code-value {
-  font-family: var(--font-mono);
-  font-size: 26px;
+.nested-card-code {
+  font-family: var(--font-mono); /* Space Mono */
+  font-size: 28px;
   font-weight: 700;
-  color: var(--accent); /* Lime invite code */
-  letter-spacing: 2px;
+  color: var(--accent); /* Lime color */
+  letter-spacing: 4px;
   line-height: 1.2;
 }
 
-.invite-code-subtitle {
+.nested-card-subtext {
   font-family: var(--font-body);
-  font-size: 11px;
-  color: var(--text-muted);
+  font-size: 12px;
+  color: var(--text-muted); /* Muted */
+  text-align: center;
 }
 
-/* 3. Footer link button */
-.onboarding-footer-link-btn {
+/* 4. Footer Link */
+.onboarding-footer-text-link {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text-primary); /* Black text */
+  text-align: center;
+  margin-top: var(--spacing-md);
+}
+
+.onboarding-link-action {
   background: none;
   border: none;
   font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-decoration: underline; /* Underline on link */
   cursor: pointer;
-  text-decoration: underline;
-  transition: color 0.2s ease;
-  align-self: center;
+  padding: 0;
+  display: inline;
 }
 
-.onboarding-footer-link-btn:hover {
-  color: var(--text-primary);
+.onboarding-link-action:hover {
+  color: var(--text-muted);
 }

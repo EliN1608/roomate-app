@@ -5,6 +5,7 @@ import Layout from './components/Layout/Layout';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import OnboardingPage from './pages/OnboardingPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import AddExpensePage from './pages/AddExpensePage';
 import ExpensesHistoryPage from './pages/ExpensesHistoryPage';
@@ -19,6 +20,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/password-forgot" element={<ForgotPasswordPage />} />
 
         {/* Layout-wrapped application routes */}
         <Route element={<Layout><Outlet /></Layout>}>

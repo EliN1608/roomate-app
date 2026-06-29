@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabase';
 import './Navbar.css';
 
 export default function Navbar() {
+  const navigate = useNavigate();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const toggleDrawer = () => {
     setIsDrawerOpen(!isDrawerOpen);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
   };
 
   return (
@@ -17,8 +25,11 @@ export default function Navbar() {
           <div className="navbar-logo-container">
             <span className="navbar-logo">RooMate</span>
           </div>
-          {/* Avatar on the left (end in RTL) */}
-          <div className="navbar-avatar">יא</div>
+          {/* Actions on the left (end in RTL) */}
+          <div className="navbar-left-actions">
+            <button className="navbar-logout-btn" onClick={handleLogout}>התנתק</button>
+            <div className="navbar-avatar">יא</div>
+          </div>
         </div>
 
         {/* Mobile Layout: visible on < 1024px */}
@@ -52,7 +63,7 @@ export default function Navbar() {
             </div>
             <div className="mobile-drawer-content">
               <div className="drawer-section-title">פעולות נוספות</div>
-              <button className="drawer-btn" onClick={() => { alert('התנתקות מהמערכת'); toggleDrawer(); }}>התנתק</button>
+              <button className="drawer-btn" onClick={() => { handleLogout(); toggleDrawer(); }}>התנתק</button>
               <button className="drawer-btn" onClick={() => { alert('הגדרות שותפים'); toggleDrawer(); }}>הגדרות שותפים</button>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import './LoginPage.css';
 
 const GoogleIcon = () => (
@@ -13,32 +14,53 @@ const GoogleIcon = () => (
 );
 
 export default function LoginPage() {
-  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('login');
+  const [error, setError] = useState('');
 
   // Form states
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    console.log('Login submitted:', { email, password });
-    login();
-    navigate('/dashboard');
+    setError('');
+    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+    if (err) {
+      setError('Invalid email or password');
+    } else {
+      navigate('/dashboard');
+    }
   };
 
-  const handleRegisterSubmit = (e) => {
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
-    console.log('Register submitted:', { fullName, email, password });
-    login();
-    navigate('/dashboard');
+    setError('');
+    const { error: err } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName
+        }
+      }
+    });
+    if (err) {
+      setError(err.message);
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   const handleForgotPassword = (e) => {
     e.preventDefault();
     navigate('/password-forgot');
+  };
+
+  const handleTabSwitch = (tab) => {
+    setActiveTab(tab);
+    setError('');
   };
 
   return (
@@ -54,7 +76,7 @@ export default function LoginPage() {
           <button 
             type="button" 
             className="login-prompt-link" 
-            onClick={() => setActiveTab('register')}
+            onClick={() => handleTabSwitch('register')}
           >
             הירשמו בחינם
           </button>
@@ -69,14 +91,14 @@ export default function LoginPage() {
             <button
               type="button"
               className={`tab-button ${activeTab === 'login' ? 'active' : 'inactive'}`}
-              onClick={() => setActiveTab('login')}
+              onClick={() => handleTabSwitch('login')}
             >
               התחברות
             </button>
             <button
               type="button"
               className={`tab-button ${activeTab === 'register' ? 'active' : 'inactive'}`}
-              onClick={() => setActiveTab('register')}
+              onClick={() => handleTabSwitch('register')}
             >
               הרשמה
             </button>
@@ -87,6 +109,7 @@ export default function LoginPage() {
             <div className="login-tab-panel">
               <h1 className="login-title">ברוכים השבים 👋</h1>
               <p className="login-subtitle">היכנסו לחשבון שלכם כדי להמשיך</p>
+              {error && <div className="login-error-msg">{error}</div>}
 
               <form onSubmit={handleLoginSubmit} className="login-form">
                 <div className="login-field">
@@ -145,6 +168,7 @@ export default function LoginPage() {
             <div className="login-tab-panel">
               <h1 className="login-title">צרו חשבון חינם 🏠</h1>
               <p className="login-subtitle">הצטרפו לאלפי דירות שכבר מנוהלות בחכמה</p>
+              {error && <div className="login-error-msg">{error}</div>}
 
               <form onSubmit={handleRegisterSubmit} className="login-form">
                 <div className="login-field">
@@ -217,7 +241,7 @@ export default function LoginPage() {
               <button 
                 type="button" 
                 className="switch-tab-link" 
-                onClick={() => setActiveTab('register')}
+                onClick={() => handleTabSwitch('register')}
               >
                 הירשמו כאן
               </button>
@@ -228,7 +252,7 @@ export default function LoginPage() {
               <button 
                 type="button" 
                 className="switch-tab-link" 
-                onClick={() => setActiveTab('login')}
+                onClick={() => handleTabSwitch('login')}
               >
                 היכנסו כאן
               </button>

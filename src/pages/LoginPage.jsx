@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 import './LoginPage.css';
 
 const GoogleIcon = () => (
@@ -12,6 +13,7 @@ const GoogleIcon = () => (
 );
 
 export default function LoginPage() {
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('login');
 
@@ -23,11 +25,15 @@ export default function LoginPage() {
   const handleLoginSubmit = (e) => {
     e.preventDefault();
     console.log('Login submitted:', { email, password });
+    login();
+    navigate('/dashboard');
   };
 
   const handleRegisterSubmit = (e) => {
     e.preventDefault();
     console.log('Register submitted:', { fullName, email, password });
+    login();
+    navigate('/dashboard');
   };
 
   const handleForgotPassword = (e) => {

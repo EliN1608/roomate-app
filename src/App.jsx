@@ -13,6 +13,7 @@ import AddExpensePage from './pages/AddExpensePage';
 import ExpensesHistoryPage from './pages/ExpensesHistoryPage';
 import ShoppingListPage from './pages/ShoppingListPage';
 import ProfilePage from './pages/ProfilePage';
+import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
   return (
@@ -35,6 +36,9 @@ function App() {
               <Route path="/profile" element={<ProfilePage />} />
             </Route>
           </Route>
+
+          {/* Wildcard 404 Route */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Router>
     </AuthProvider>

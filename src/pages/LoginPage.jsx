@@ -1,6 +1,6 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import './LoginPage.css';
 
@@ -14,6 +14,7 @@ const GoogleIcon = () => (
 );
 
 export default function LoginPage() {
+  const { login, register } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('login');
   const [error, setError] = useState('');
@@ -25,37 +26,32 @@ export default function LoginPage() {
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-    if (err) {
-      setError('Invalid email or password');
-    } else {
+    try {
+      await login(email, password);
       navigate('/dashboard');
+    } catch (err) {
+      alert('שגיאה: ' + err.message);
     }
   };
 
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    const { error: err } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName
-        }
-      }
-    });
-    if (err) {
-      setError(err.message);
-    } else {
+    try {
+      await register(email, password, fullName);
       navigate('/dashboard');
+    } catch (err) {
+      alert('שגיאה: ' + err.message);
     }
   };
 
-  const handleForgotPassword = (e) => {
+  const handleForgotPassword = async (e) => {
     e.preventDefault();
-    navigate('/password-forgot');
+    try {
+      await supabase.auth.resetPasswordForEmail(email);
+      alert('קישור לאיפוס סיסמה נשלח לאימייל שלך');
+    } catch (err) {
+      alert('שגיאה: ' + err.message);
+    }
   };
 
   const handleTabSwitch = (tab) => {

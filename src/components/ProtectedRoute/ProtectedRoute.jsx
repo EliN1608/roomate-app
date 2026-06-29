@@ -1,12 +1,12 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { AuthContext } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function ProtectedRoute() {
-  const { isLoggedIn, loading } = useContext(AuthContext);
+  const { isLoggedIn, loading } = useAuth();
 
   if (loading) {
-    return <div style={{ color: 'var(--text-primary)', padding: 'var(--spacing-xl)', textAlign: 'center', fontFamily: 'var(--font-body)' }}>טוען...</div>;
+    return null;
   }
 
   if (!isLoggedIn) {

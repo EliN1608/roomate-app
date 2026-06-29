@@ -1,0 +1,257 @@
+/* ============================================================
+   ProfilePage.css — RooMate Profile Page
+   RTL layout, Pilo design style
+   ============================================================ */
+
+.profile-page-wrapper {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 16px;
+  direction: rtl;
+  text-align: right;
+  box-sizing: border-box;
+}
+
+.profile-page-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  color: #0F0F0F;
+  margin: 0 0 32px 0;
+}
+
+/* Common Card Style */
+.profile-card {
+  background-color: #FFFFFF;
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
+  border-radius: 24px;
+  padding: 32px;
+  box-sizing: border-box;
+  margin-top: 16px;
+}
+
+.profile-card:first-of-type {
+  margin-top: 0;
+}
+
+.card-section-header {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: #0F0F0F;
+  margin: 0 0 16px 0;
+}
+
+/* 1. USER CARD */
+.user-card-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-avatar {
+  width: 64px;
+  height: 64px;
+  background-color: #0F0F0F;
+  color: #C7FF2E;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Correct layout direction for sub-labels */
+  text-align: right;
+}
+
+.user-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: #0F0F0F;
+  margin: 0;
+}
+
+.user-email {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #555555;
+  margin: 4px 0 0 0;
+}
+
+.user-role-badge {
+  background-color: #C7FF2E;
+  color: #0F0F0F;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  display: inline-block;
+  margin-top: 6px;
+}
+
+/* 2. APARTMENT CARD */
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.info-row.no-border {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.info-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #555555;
+}
+
+.info-value {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0F0F0F;
+}
+
+.info-value.invite-code {
+  font-family: var(--font-mono), monospace;
+  color: #C7FF2E;
+}
+
+/* 3. ROOMMATES CARD */
+.roommate-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.roommate-row.no-border {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.roommate-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.roommate-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.roommate-avatar.bg-dark {
+  background-color: #0F0F0F;
+  color: #C7FF2E;
+}
+
+.roommate-avatar.bg-lime {
+  background-color: #C7FF2E;
+  color: #0F0F0F;
+}
+
+.roommate-details {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.roommate-name {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0F0F0F;
+}
+
+.self-badge {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: #888888;
+}
+
+.role-tag {
+  border-radius: 999px;
+  font-size: 11px;
+  padding: 2px 8px;
+  font-weight: 500;
+}
+
+.role-tag.admin {
+  background-color: rgba(199, 255, 46, 0.13); /* #C7FF2E22 */
+  color: #C7FF2E;
+}
+
+.role-tag.member {
+  background-color: rgba(0, 0, 0, 0.06);
+  color: #555555;
+}
+
+/* 4. ACTIONS CARD */
+.actions-buttons-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.action-btn {
+  width: 100%;
+  border-radius: 14px;
+  padding: 12px 20px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  text-align: right;
+  cursor: pointer;
+  outline: none;
+  box-sizing: border-box;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.change-password-btn {
+  background-color: #FFFFFF;
+  border: 1.5px solid rgba(0, 0, 0, 0.15);
+  color: #0F0F0F;
+}
+
+.change-password-btn:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.logout-btn {
+  background-color: #FFFFFF;
+  border: 1.5px solid #FF4444;
+  color: #FF4444;
+  font-weight: 700;
+}
+
+.logout-btn:hover {
+  background-color: rgba(255, 68, 68, 0.04);
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .profile-card {
+    padding: 20px;
+  }
+}

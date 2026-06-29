@@ -16,14 +16,14 @@
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 700;
   font-size: 28px;
-  color: #0F0F0F;
+  color: var(--bg-surface);
   margin: 0 0 32px 0;
 }
 
 /* Common Card Style */
 .profile-card {
-  background-color: #FFFFFF;
-  border: 1.5px solid rgba(0, 0, 0, 0.08);
+  background-color: var(--text-on-dark);
+  border: 1.5px solid var(--border);
   border-radius: 24px;
   padding: 32px;
   box-sizing: border-box;
@@ -38,7 +38,7 @@
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 700;
   font-size: 16px;
-  color: #0F0F0F;
+  color: var(--bg-surface);
   margin: 0 0 16px 0;
 }
 
@@ -52,8 +52,8 @@
 .user-avatar {
   width: 64px;
   height: 64px;
-  background-color: #0F0F0F;
-  color: #C7FF2E;
+  background-color: var(--bg-surface);
+  color: var(--accent);
   font-family: 'Space Grotesk', sans-serif;
   font-size: 24px;
   font-weight: 700;
@@ -75,20 +75,20 @@
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 700;
   font-size: 20px;
-  color: #0F0F0F;
+  color: var(--bg-surface);
   margin: 0;
 }
 
 .user-email {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #555555;
+  color: var(--text-muted);
   margin: 4px 0 0 0;
 }
 
 .user-role-badge {
-  background-color: #C7FF2E;
-  color: #0F0F0F;
+  background-color: var(--accent);
+  color: var(--bg-surface);
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
@@ -103,7 +103,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid var(--border);
 }
 
 .info-row.no-border {
@@ -114,19 +114,19 @@
 .info-label {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #555555;
+  color: var(--text-muted);
 }
 
 .info-value {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 700;
-  color: #0F0F0F;
+  color: var(--bg-surface);
 }
 
 .info-value.invite-code {
   font-family: var(--font-mono), monospace;
-  color: #C7FF2E;
+  color: var(--accent);
 }
 
 /* 3. ROOMMATES CARD */
@@ -135,7 +135,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid var(--border);
 }
 
 .roommate-row.no-border {
@@ -163,13 +163,13 @@
 }
 
 .roommate-avatar.bg-dark {
-  background-color: #0F0F0F;
-  color: #C7FF2E;
+  background-color: var(--bg-surface);
+  color: var(--accent);
 }
 
 .roommate-avatar.bg-lime {
-  background-color: #C7FF2E;
-  color: #0F0F0F;
+  background-color: var(--accent);
+  color: var(--bg-surface);
 }
 
 .roommate-details {
@@ -182,13 +182,13 @@
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 700;
-  color: #0F0F0F;
+  color: var(--bg-surface);
 }
 
 .self-badge {
   font-family: 'Inter', sans-serif;
   font-size: 11px;
-  color: #888888;
+  color: var(--text-muted);
 }
 
 .role-tag {
@@ -199,13 +199,13 @@
 }
 
 .role-tag.admin {
-  background-color: rgba(199, 255, 46, 0.13); /* #C7FF2E22 */
-  color: #C7FF2E;
+  background-color: var(--accent-soft);
+  color: var(--accent);
 }
 
 .role-tag.member {
-  background-color: rgba(0, 0, 0, 0.06);
-  color: #555555;
+  background-color: var(--border);
+  color: var(--text-muted);
 }
 
 /* 4. ACTIONS CARD */
@@ -229,9 +229,9 @@
 }
 
 .change-password-btn {
-  background-color: #FFFFFF;
-  border: 1.5px solid rgba(0, 0, 0, 0.15);
-  color: #0F0F0F;
+  background-color: var(--text-on-dark);
+  border: 1.5px solid var(--border);
+  color: var(--bg-surface);
 }
 
 .change-password-btn:hover {
@@ -239,9 +239,9 @@
 }
 
 .logout-btn {
-  background-color: #FFFFFF;
-  border: 1.5px solid #FF4444;
-  color: #FF4444;
+  background-color: var(--text-on-dark);
+  border: 1.5px solid var(--error);
+  color: var(--error);
   font-weight: 700;
 }
 

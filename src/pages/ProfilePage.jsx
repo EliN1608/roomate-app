@@ -1,7 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import './ProfilePage.css';
 
 export default function ProfilePage() {
+  const navigate = useNavigate();
+
   const handlePasswordChange = () => {
     console.log('Change password clicked');
   };
@@ -106,6 +109,18 @@ export default function ProfilePage() {
             התנתקות
           </button>
         </div>
+      </section>
+
+      {/* 5. APARTMENT ACTIONS CARD */}
+      <section className="profile-card apartment-actions-card">
+        <h3 className="card-section-header">הדירה שלי</h3>
+        <button 
+          type="button" 
+          className="action-btn join-apartment-btn"
+          onClick={() => navigate('/onboarding')}
+        >
+          צור או הצטרף לדירה
+        </button>
       </section>
     </div>
   );

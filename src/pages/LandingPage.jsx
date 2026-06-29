@@ -141,7 +141,7 @@ export default function LandingPage() {
 
           {/* Left side: Button */}
           <div className="nav-sticky-action">
-            <Link to="/onboarding" className="nav-sticky-btn">
+            <Link to="/login" className="nav-sticky-btn">
               התחילו בחינם
             </Link>
           </div>
@@ -164,7 +164,7 @@ export default function LandingPage() {
             <button type="button" className="mobile-dropdown-link" onClick={() => handleScroll(featuresRef)}>פיצ'רים</button>
             <button type="button" className="mobile-dropdown-link" onClick={() => handleScroll(howItWorksRef)}>איך זה עובד</button>
             <button type="button" className="mobile-dropdown-link" onClick={() => handleScroll(reviewsRef)}>ביקורות</button>
-            <Link to="/onboarding" className="mobile-dropdown-cta-btn" onClick={() => setIsMenuOpen(false)}>
+            <Link to="/login" className="mobile-dropdown-cta-btn" onClick={() => setIsMenuOpen(false)}>
               התחילו בחינם
             </Link>
           </div>
@@ -190,7 +190,7 @@ export default function LandingPage() {
             </p>
 
             <div className="hero-main-actions">
-              <Link to="/onboarding" className="hero-btn-primary">
+              <Link to="/login" className="hero-btn-primary">
                 התחילו בחינם ←
               </Link>
               <button type="button" className="hero-btn-secondary" onClick={() => handleScroll(howItWorksRef)}>

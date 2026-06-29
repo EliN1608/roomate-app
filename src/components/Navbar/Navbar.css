@@ -79,9 +79,31 @@
   justify-content: center;
   font-family: var(--font-body);
   font-size: 14px;
-  font-weight: 700;
-  line-height: 1;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-weight: 750;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.navbar-left-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.navbar-logout-btn {
+  background: none;
+  border: 1.5px solid var(--bg-surface);
+  border-radius: var(--radius-btn);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.navbar-logout-btn:hover {
+  background-color: var(--accent-soft);
 }
 
 /* Mobile styles */

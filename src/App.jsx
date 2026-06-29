@@ -7,6 +7,7 @@ import LoginPage from './pages/LoginPage';
 import OnboardingPage from './pages/OnboardingPage';
 import DashboardPage from './pages/DashboardPage';
 import AddExpensePage from './pages/AddExpensePage';
+import ExpensesHistoryPage from './pages/ExpensesHistoryPage';
 import ShoppingListPage from './pages/ShoppingListPage';
 import ProfilePage from './pages/ProfilePage';
 
@@ -22,8 +23,7 @@ function App() {
         {/* Layout-wrapped application routes */}
         <Route element={<Layout><Outlet /></Layout>}>
           <Route path="/dashboard" element={<DashboardPage />} />
-          {/* Support both /expenses and /expenses/add to resolve navigation targets */}
-          <Route path="/expenses" element={<AddExpensePage />} />
+          <Route path="/expenses" element={<ExpensesHistoryPage />} />
           <Route path="/expenses/add" element={<AddExpensePage />} />
           <Route path="/shopping" element={<ShoppingListPage />} />
           <Route path="/profile" element={<ProfilePage />} />

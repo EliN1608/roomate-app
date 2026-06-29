@@ -1,0 +1,182 @@
+/* ============================================================
+   ExpensesHistoryPage.css — RooMate Expenses History Page
+   Strictly using CSS Variables from globals.css
+   ============================================================ */
+
+.expenses-history-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-sm);
+  direction: rtl;
+  text-align: right;
+  box-sizing: border-box;
+}
+
+.history-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 28px;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+/* Filter Bar */
+.filter-bar {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+  width: 100%;
+}
+
+.filter-btn {
+  flex: 1;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 0;
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  box-sizing: border-box;
+  text-align: center;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  
+  /* Inactive states */
+  background-color: var(--text-on-dark);
+  color: var(--text-primary);
+  border: 1.5px solid var(--bg-surface);
+}
+
+.filter-btn:hover {
+  background-color: var(--bg-primary);
+}
+
+.filter-btn.active {
+  background-color: var(--accent);
+  color: var(--bg-surface);
+  border-color: var(--bg-surface);
+}
+
+/* Total Section Header */
+.total-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.total-label {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.total-amount {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Expenses List */
+.expenses-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+/* Row Card matching Dashboard style but with CSS variables only */
+.expense-row-card {
+  background-color: var(--text-on-dark); /* White card background */
+  border: 1.5px solid var(--bg-surface);
+  border-radius: 16px;
+  padding: 14px var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+  box-sizing: border-box;
+}
+
+.expense-icon-square {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: var(--accent-soft);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.expense-info {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0; /* Prevents text overflow */
+}
+
+.expense-name {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expense-payer {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.expense-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+}
+
+.expense-amount {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  direction: ltr; /* Ensure amount displays correctly (e.g. ₪120.00) */
+}
+
+.expense-date {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 480px) {
+  .expenses-history-container {
+    padding: 0 var(--spacing-sm);
+  }
+  
+  .history-title {
+    font-size: 24px;
+  }
+  
+  .expense-row-card {
+    padding: 12px var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+  
+  .filter-btn {
+    font-size: 13px;
+    padding: 8px 0;
+  }
+}

@@ -11,6 +11,7 @@ export default function OnboardingPage() {
   const [activeTab, setActiveTab] = useState('create'); // 'create' or 'join'
   const [apartmentName, setApartmentName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
+  const [generatedInviteCode, setGeneratedInviteCode] = useState('');
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -49,7 +50,10 @@ export default function OnboardingPage() {
       
       if (memberError) throw memberError;
       
-      // 4. Navigate to dashboard
+      // 4. Set generated invite code state before navigating
+      setGeneratedInviteCode(generatedCode);
+      
+      // 5. Navigate to dashboard
       navigate('/dashboard');
       
     } catch (err) {
@@ -170,7 +174,7 @@ export default function OnboardingPage() {
             {/* Nested Dark Card */}
             <div className="nested-onboarding-card">
               <div className="nested-card-label">לאחר היצירה תקבלו קוד הזמנה</div>
-              <div className="nested-card-code">AB72KX</div>
+              <div className="nested-card-code">{generatedInviteCode || 'XXXXXX'}</div>
               <div className="nested-card-subtext">שתפו את הקוד עם השותפים שלכם</div>
             </div>
           </form>

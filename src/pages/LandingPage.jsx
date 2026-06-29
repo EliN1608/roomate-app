@@ -94,8 +94,7 @@ export default function LandingPage() {
       stars: '★★★★★',
       text: 'לפני RooMate היה לי גיליון Google עם 14 טאבים וקבוצת וואטסאפ עם 300+ הודעות שלא נקראו. עכשיו אנחנו פשוט גרים כאן. זה פשוט מדהים כמה זה קל.',
       avatar: 'JK',
-      avatarBg: '#C7FF2E',
-      avatarColor: '#0F0F0F',
+      avatarClassName: 'avatar-lime',
       name: 'Jamie K.',
       location: 'גר עם 3 שותפים בתל אביב',
       highlighted: false
@@ -104,8 +103,7 @@ export default function LandingPage() {
       stars: '★★★★★',
       text: 'גלגל המטלות לבד שווה את הכל. השותף שלי היה \'שוכח\' כל שבוע. עכשיו האפליקציה שולחת לו תזכורת והוא לא יכול להעמיד פנים שלא ראה.',
       avatar: 'MA',
-      avatarBg: '#1C1C1C',
-      avatarColor: '#C7FF2E',
+      avatarClassName: 'avatar-dark',
       name: 'Mia A.',
       location: 'סטודנטית לתואר שני, חיפה',
       highlighted: true // Highlight middle card
@@ -114,8 +112,7 @@ export default function LandingPage() {
       stars: '★★★★★',
       text: 'בעצם היה לנו ישיבת דירה כדי להחליט מה יהיו חוקי הבית הראשונים שלנו. השיחה הפרודוקטיבית הראשונה שהיתה לנו מזה חודשים. האפליקציה עוד לא יצאה — הקונספט כבר תיקן אותנו.',
       avatar: 'SR',
-      avatarBg: '#C7FF2E',
-      avatarColor: '#0F0F0F',
+      avatarClassName: 'avatar-lime',
       name: 'Sam R.',
       location: 'צעיר עצמאי, ירושלים',
       highlighted: false
@@ -411,8 +408,7 @@ export default function LandingPage() {
               
               <div className="testimonial-author-row">
                 <span 
-                  className="author-avatar-circle"
-                  style={{ backgroundColor: rev.avatarBg, color: rev.avatarColor, border: rev.highlighted ? '1px solid var(--accent)' : 'none' }}
+                  className={`author-avatar-circle ${rev.avatarClassName} ${rev.highlighted ? 'highlighted-border' : ''}`}
                 >
                   {rev.avatar}
                 </span>

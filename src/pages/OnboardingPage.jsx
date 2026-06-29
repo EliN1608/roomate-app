@@ -1,31 +1,118 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import './OnboardingPage.css';
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('create'); // 'create' or 'join'
   const [apartmentName, setApartmentName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
 
-  const handleCreate = (e) => {
+  const handleCreate = async (e) => {
     e.preventDefault();
     if (!apartmentName.trim()) {
       alert('נא להזין שם דירה');
       return;
     }
-    alert(`דירת "${apartmentName}" נוצרה בהצלחה! קוד ההזמנה שלך: AB72KX`);
-    navigate('/dashboard');
+    try {
+      setLoading(true);
+      
+      // 1. Generate invite code
+      const generatedCode = Math.random().toString(36)
+        .substring(2, 8).toUpperCase();
+      
+      // 2. Create apartment in Supabase
+      const { data: apartment, error: apartmentError } = await supabase
+        .from('apartments')
+        .insert({
+          name: apartmentName,
+          invite_code: generatedCode,
+          created_by: user.id
+        })
+        .select()
+        .single();
+      
+      if (apartmentError) throw apartmentError;
+      
+      // 3. Add user as admin member
+      const { error: memberError } = await supabase
+        .from('members')
+        .insert({
+          user_id: user.id,
+          apartment_id: apartment.id,
+          role: 'admin'
+        });
+      
+      if (memberError) throw memberError;
+      
+      // 4. Navigate to dashboard
+      navigate('/dashboard');
+      
+    } catch (err) {
+      alert('שגיאה ביצירת דירה: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleJoin = (e) => {
+  const handleJoin = async (e) => {
     e.preventDefault();
     if (!inviteCode.trim()) {
       alert('נא להזין קוד הזמנה');
       return;
     }
-    alert(`הצטרפת בהצלחה לדירה עם הקוד: ${inviteCode}`);
-    navigate('/dashboard');
+    try {
+      setLoading(true);
+      
+      // 1. Find apartment by invite code
+      const { data: apartment, error: findError } = await supabase
+        .from('apartments')
+        .select('id, name')
+        .eq('invite_code', inviteCode.toUpperCase())
+        .single();
+      
+      if (findError || !apartment) {
+        alert('קוד הזמנה לא נמצא. נסו שנית.');
+        return;
+      }
+      
+      // 2. Check if already a member
+      const { data: existingMember } = await supabase
+        .from('members')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('apartment_id', apartment.id)
+        .single();
+      
+      if (existingMember) {
+        alert('אתם כבר חברים בדירה זו!');
+        navigate('/dashboard');
+        return;
+      }
+      
+      // 3. Add user as member
+      const { error: memberError } = await supabase
+        .from('members')
+        .insert({
+          user_id: user.id,
+          apartment_id: apartment.id,
+          role: 'member'
+        });
+      
+      if (memberError) throw memberError;
+      
+      // 4. Navigate to dashboard
+      navigate('/dashboard');
+      
+    } catch (err) {
+      alert('שגיאה בהצטרפות לדירה: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -76,8 +163,8 @@ export default function OnboardingPage() {
               />
             </div>
 
-            <button type="submit" className="onboarding-submit-btn">
-              צור דירה חדשה
+            <button type="submit" className="onboarding-submit-btn" disabled={loading}>
+              {loading ? 'טוען...' : 'צור דירה חדשה'}
             </button>
 
             {/* Nested Dark Card */}
@@ -101,8 +188,8 @@ export default function OnboardingPage() {
               />
             </div>
 
-            <button type="submit" className="onboarding-submit-btn">
-              הצטרפו לדירה
+            <button type="submit" className="onboarding-submit-btn" disabled={loading}>
+              {loading ? 'טוען...' : 'הצטרפו לדירה'}
             </button>
           </form>
         )}

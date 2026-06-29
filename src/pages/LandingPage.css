@@ -993,6 +993,20 @@ html {
   flex-shrink: 0;
 }
 
+.avatar-lime {
+  background-color: var(--accent);
+  color: var(--bg-surface);
+}
+
+.avatar-dark {
+  background-color: var(--bg-surface);
+  color: var(--accent);
+}
+
+.highlighted-border {
+  border: 1px solid var(--accent);
+}
+
 .author-info-meta {
   display: flex;
   flex-direction: column;

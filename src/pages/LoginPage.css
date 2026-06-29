@@ -1,0 +1,330 @@
+/* ============================================================
+   LoginPage.css — RooMate Login/Register Standalone Page
+   RTL direction, Pilo design style
+   ============================================================ */
+
+.login-page-container {
+  background-color: #F5F5F5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  direction: rtl;
+  font-family: 'Inter', sans-serif;
+  color: #0F0F0F;
+  box-sizing: border-box;
+}
+
+/* 1. TOP BAR */
+.login-top-bar {
+  background-color: #F5F5F5;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 0 48px;
+  height: 64px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.login-logo {
+  text-decoration: none;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+}
+
+.logo-roo {
+  color: #0F0F0F;
+}
+
+.logo-mate {
+  color: #C7FF2E;
+}
+
+.login-top-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.login-prompt-text {
+  color: #555555;
+}
+
+.login-prompt-link {
+  color: #C7FF2E;
+  font-weight: 700;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.login-prompt-link:hover {
+  text-decoration: underline;
+}
+
+/* 2. MAIN CONTENT */
+.login-main-content {
+  background-color: #F5F5F5;
+  min-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  box-sizing: border-box;
+  flex-grow: 1;
+}
+
+/* Centered card */
+.login-card {
+  background: #FFFFFF;
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
+  border-radius: 24px;
+  padding: 48px;
+  width: 100%;
+  max-width: 440px;
+  box-sizing: border-box;
+}
+
+/* TABS */
+.tabs-container {
+  display: flex;
+  width: 100%;
+  border-bottom: 1.5px solid rgba(0,0,0,0.08);
+  margin-bottom: 32px;
+}
+
+.tab-button {
+  flex: 1;
+  text-align: center;
+  padding: 12px 0;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-bottom: 2.5px solid transparent;
+  margin-bottom: -1.5px;
+  font-family: inherit;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.tab-button.active {
+  color: #0F0F0F;
+  border-bottom: 2.5px solid #C7FF2E;
+}
+
+.tab-button.inactive {
+  color: #555555;
+}
+
+/* TAB PANEL CONTENT */
+.login-tab-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.login-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 26px;
+  color: #0F0F0F;
+  margin: 0 0 8px 0;
+  text-align: right;
+}
+
+.login-subtitle {
+  font-size: 15px;
+  color: #555555;
+  margin: 0 0 32px 0;
+  text-align: right;
+  line-height: 1.4;
+}
+
+/* FORM & FIELDS */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+
+.login-label {
+  font-size: 13px;
+  color: #555555;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.login-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.forgot-password-link {
+  color: #C7FF2E;
+  font-size: 12px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+}
+
+.forgot-password-link:hover {
+  text-decoration: underline;
+}
+
+.login-input {
+  background-color: #FFFFFF;
+  border: 1.5px solid rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 15px;
+  width: 100%;
+  box-sizing: border-box;
+  color: #0F0F0F;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.login-input:focus {
+  border-color: #C7FF2E;
+}
+
+/* Primary Button */
+.login-submit-btn {
+  margin-top: 8px;
+  width: 100%;
+  background-color: #C7FF2E;
+  color: #0F0F0F;
+  font-weight: 700;
+  font-size: 15px;
+  border-radius: 14px;
+  padding: 14px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.2s ease;
+}
+
+.login-submit-btn:hover {
+  opacity: 0.9;
+}
+
+/* Divider */
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.divider-text {
+  font-size: 13px;
+  color: #555555;
+}
+
+/* Google Button */
+.google-btn {
+  width: 100%;
+  background-color: #FFFFFF;
+  border: 1.5px solid rgba(0, 0, 0, 0.15);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-family: inherit;
+  font-size: 15px;
+  color: #0F0F0F;
+}
+
+.google-btn:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Terms below card */
+.login-terms {
+  font-size: 12px;
+  color: #555555;
+  text-align: center;
+  margin-top: 16px;
+  line-height: 1.5;
+}
+
+.terms-link {
+  color: #C7FF2E;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.terms-link:hover {
+  text-decoration: underline;
+}
+
+/* 3. BOTTOM LINK */
+.login-bottom-link {
+  font-size: 14px;
+  margin-top: 24px;
+  text-align: center;
+  color: #555555;
+}
+
+.switch-tab-link {
+  color: #C7FF2E;
+  font-weight: 700;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.switch-tab-link:hover {
+  text-decoration: underline;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 768px) {
+  .login-top-bar {
+    padding: 0 24px;
+  }
+  .login-card {
+    border-radius: 0;
+    border: none;
+    border-bottom: 1.5px solid rgba(0, 0, 0, 0.08);
+    padding: 24px;
+    max-width: 100%;
+  }
+  .login-main-content {
+    padding: 24px 0;
+    justify-content: flex-start;
+  }
+}

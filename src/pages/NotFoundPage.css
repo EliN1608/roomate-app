@@ -1,0 +1,95 @@
+/* ============================================================
+   NotFoundPage.css — RooMate 404 Page
+   Strictly using CSS Variables from globals.css
+   ============================================================ */
+
+.notfound-container {
+  background-color: var(--bg-surface);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  direction: rtl;
+  text-align: center;
+  padding: var(--spacing-lg);
+  box-sizing: border-box;
+}
+
+.notfound-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 400px;
+}
+
+.notfound-code {
+  font-family: var(--font-mono);
+  font-size: 120px;
+  color: var(--accent);
+  line-height: 1;
+  margin: 0 0 var(--spacing-md) 0;
+  font-weight: 700;
+  letter-spacing: -2px;
+}
+
+.notfound-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-on-dark);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.notfound-subtitle {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--text-muted);
+  margin: 0 0 var(--spacing-xl) 0;
+  line-height: 1.5;
+}
+
+.notfound-btn {
+  display: inline-block;
+  background-color: var(--accent);
+  color: var(--bg-surface);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: none;
+  border-radius: var(--radius-btn);
+  padding: 14px 32px;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  box-sizing: border-box;
+}
+
+.notfound-btn:hover {
+  opacity: 0.9;
+}
+
+.notfound-btn:active {
+  opacity: 0.85;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 480px) {
+  .notfound-code {
+    font-size: 90px;
+  }
+  .notfound-title {
+    font-size: 22px;
+  }
+  .notfound-subtitle {
+    font-size: 14px;
+    margin-bottom: var(--spacing-lg);
+  }
+  .notfound-btn {
+    padding: 12px 24px;
+    font-size: 14px;
+    width: 100%;
+    text-align: center;
+  }
+}

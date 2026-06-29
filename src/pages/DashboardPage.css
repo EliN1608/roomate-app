@@ -241,3 +241,11 @@
   font-size: 14px;
   font-weight: 600;
 }
+
+.dashboard-loading,
+.dashboard-empty {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+}

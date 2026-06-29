@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './ExpensesHistoryPage.css';
 
 export default function ExpensesHistoryPage() {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState('all'); // 'all' | 'paid' | 'owed'
 
   const expensesData = [
@@ -83,6 +85,15 @@ export default function ExpensesHistoryPage() {
           </div>
         ))}
       </div>
+
+      {/* Bottom CTA Button */}
+      <button
+        type="button"
+        className="add-expense-cta"
+        onClick={() => navigate('/expenses/add')}
+      >
+        + הוסף הוצאה חדשה
+      </button>
     </div>
   );
 }

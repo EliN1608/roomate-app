@@ -158,6 +158,30 @@
   color: var(--text-muted);
 }
 
+.add-expense-cta {
+  background-color: var(--bg-surface);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-weight: 700;
+  border-radius: var(--radius-btn);
+  padding: 16px;
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  margin-top: var(--spacing-lg);
+  font-size: 15px;
+  transition: opacity 0.2s ease;
+  box-sizing: border-box;
+}
+
+.add-expense-cta:hover {
+  opacity: 0.9;
+}
+
+.add-expense-cta:active {
+  opacity: 0.85;
+}
+
 /* ============================================================
    RESPONSIVE
    ============================================================ */

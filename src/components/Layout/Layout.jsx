@@ -1,10 +1,11 @@
 import React from 'react';
+import { Outlet } from 'react-router-dom';
 import Navbar from '../Navbar/Navbar';
 import Sidebar from '../Sidebar/Sidebar';
 import BottomNav from './BottomNav';
 import './Layout.css';
 
-export default function Layout({ children }) {
+export default function Layout() {
   return (
     <div className="layout-container">
       {/* Sidebar - fixed on the right on desktop, hidden on mobile */}
@@ -17,7 +18,7 @@ export default function Layout({ children }) {
 
         {/* Content area scrollable under Navbar */}
         <main className="layout-content">
-          {children}
+          <Outlet />
         </main>
 
         {/* Bottom Navigation - fixed at bottom on mobile/tablet, hidden on desktop */}

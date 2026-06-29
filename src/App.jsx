@@ -28,7 +28,7 @@ function App() {
 
           {/* Layout-wrapped application routes */}
           <Route element={<ProtectedRoute />}>
-            <Route element={<Layout><Outlet /></Layout>}>
+            <Route element={<Layout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/expenses" element={<ExpensesHistoryPage />} />
               <Route path="/expenses/add" element={<AddExpensePage />} />

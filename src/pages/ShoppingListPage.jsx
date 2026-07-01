@@ -1,43 +1,90 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import './ShoppingListPage.css';
 
 export default function ShoppingListPage() {
-  const [todoItems, setTodoItems] = useState([
-    { id: 1, name: 'חלב', addedBy: 'מיכל' },
-    { id: 2, name: 'נייר טואלט', addedBy: 'דניאל' },
-    { id: 3, name: 'סבון כלים', addedBy: 'יואב' }
-  ]);
-
-  const [doneItems, setDoneItems] = useState([
-    { id: 4, name: 'קפה' },
-    { id: 5, name: 'לחם' }
-  ]);
-
+  const { user, apartmentId } = useAuth();
+  const [todoItems, setTodoItems] = useState([]);
+  const [doneItems, setDoneItems] = useState([]);
   const [inputVal, setInputVal] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const handleAddItem = (e) => {
+  const fetchItems = async () => {
+    if (!apartmentId) return;
+    try {
+      setLoading(true);
+      const { data } = await supabase
+        .from('shopping_items')
+        .select('id, name, is_done, added_by, created_at')
+        .eq('apartment_id', apartmentId)
+        .order('created_at', { ascending: true });
+      
+      const items = data || [];
+      setTodoItems(items.filter(i => !i.is_done));
+      setDoneItems(items.filter(i => i.is_done));
+    } catch (err) {
+      console.error('Error fetching items:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchItems();
+  }, [apartmentId]);
+
+  const handleAddItem = async (e) => {
     e.preventDefault();
     if (!inputVal.trim()) return;
-    setTodoItems([
-      ...todoItems,
-      { id: Date.now(), name: inputVal.trim(), addedBy: 'אני' }
-    ]);
-    setInputVal('');
+    try {
+      const { error } = await supabase
+        .from('shopping_items')
+        .insert({
+          apartment_id: apartmentId,
+          name: inputVal.trim(),
+          is_done: false,
+          added_by: user.id
+        });
+      if (error) throw error;
+      setInputVal('');
+      fetchItems();
+    } catch (err) {
+      alert('שגיאה בהוספת פריט: ' + err.message);
+    }
   };
 
-  const handleCheckItem = (id) => {
-    const item = todoItems.find(i => i.id === id);
-    if (!item) return;
-    setTodoItems(todoItems.filter(i => i.id !== id));
-    setDoneItems([...doneItems, { id: item.id, name: item.name }]);
+  const handleCheckItem = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('shopping_items')
+        .update({ is_done: true })
+        .eq('id', id);
+      if (error) throw error;
+      fetchItems();
+    } catch (err) {
+      alert('שגיאה בעדכון פריט: ' + err.message);
+    }
   };
 
-  const handleUncheckItem = (id) => {
-    const item = doneItems.find(i => i.id === id);
-    if (!item) return;
-    setDoneItems(doneItems.filter(i => i.id !== id));
-    setTodoItems([...todoItems, { id: item.id, name: item.name, addedBy: 'אני' }]);
+  const handleUncheckItem = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('shopping_items')
+        .update({ is_done: false })
+        .eq('id', id);
+      if (error) throw error;
+      fetchItems();
+    } catch (err) {
+      alert('שגיאה בעדכון פריט: ' + err.message);
+    }
   };
+
+  if (loading) return (
+    <div className="shopping-container">
+      <div className="shopping-loading">טוען רשימה...</div>
+    </div>
+  );
 
   return (
     <div className="shopping-container" id="shopping-page">
@@ -65,7 +112,7 @@ export default function ShoppingListPage() {
               {/* Right side: Item Details */}
               <div className="item-details">
                 <div className="item-name-todo">{item.name}</div>
-                <div className="item-added-by">נוסף על ידי {item.addedBy}</div>
+                <div className="item-added-by">נוסף על ידי {item.added_by === user?.id ? 'אני' : 'שותף'}</div>
               </div>
 
               {/* Left side: Lime Checkbox Button */}

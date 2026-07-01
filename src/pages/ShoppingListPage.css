@@ -26,8 +26,10 @@
 .add-item-input {
   flex-grow: 1;
   background-color: #FFFFFF;
-  border: 1.5px solid var(--bg-surface); /* Black border */
-  border-radius: var(--radius-input); /* 12px */
+  border: 1.5px solid var(--bg-surface);
+  /* Black border */
+  border-radius: var(--radius-input);
+  /* 12px */
   padding: 12px var(--spacing-md);
   font-family: var(--font-body);
   font-size: 15px;
@@ -42,10 +44,14 @@
 }
 
 .add-item-btn {
-  background-color: var(--accent); /* Lime bg */
-  color: var(--bg-surface); /* Black text */
-  border: 1.5px solid var(--bg-surface); /* Black border */
-  border-radius: var(--radius-input); /* 12px */
+  background-color: var(--accent);
+  /* Lime bg */
+  color: var(--bg-surface);
+  /* Black text */
+  border: 1.5px solid var(--bg-surface);
+  /* Black border */
+  border-radius: var(--radius-input);
+  /* 12px */
   padding: 0 24px;
   font-family: var(--font-display);
   font-size: 15px;
@@ -82,7 +88,8 @@
 
 /* Todo Card: black background (#0F0F0F) */
 .todo-item-card {
-  background-color: var(--bg-surface); /* #0F0F0F */
+  background-color: var(--bg-surface);
+  /* #0F0F0F */
   border-radius: 20px;
   padding: 16px var(--spacing-lg);
   display: flex;
@@ -103,14 +110,16 @@
   font-family: var(--font-body);
   font-size: 16px;
   font-weight: 700;
-  color: var(--text-on-dark); /* White */
+  color: var(--text-on-dark);
+  /* White */
 }
 
 .item-added-by {
   font-family: var(--font-body);
   font-size: 12px;
   font-weight: 600;
-  color: var(--accent); /* Lime small */
+  color: var(--accent);
+  /* Lime small */
 }
 
 /* Unchecked Lime Checkbox button */
@@ -118,7 +127,8 @@
   width: 24px;
   height: 24px;
   border-radius: 6px;
-  border: 2px solid var(--accent); /* Lime border */
+  border: 2px solid var(--accent);
+  /* Lime border */
   background: transparent;
   cursor: pointer;
   flex-shrink: 0;
@@ -132,7 +142,8 @@
 .drag-dots {
   font-family: var(--font-mono);
   font-size: 18px;
-  color: var(--text-muted); /* Muted color */
+  color: var(--text-muted);
+  /* Muted color */
   cursor: grab;
   user-select: none;
   padding: 0 var(--spacing-xs);
@@ -140,7 +151,8 @@
 
 /* 4. Done Card: light gray cards, muted text, strikethrough */
 .done-item-card {
-  background-color: rgba(0, 0, 0, 0.03); /* Light gray card */
+  background-color: rgba(0, 0, 0, 0.03);
+  /* Light gray card */
   border: 1.5px solid rgba(0, 0, 0, 0.05);
   border-radius: 20px;
   padding: 16px var(--spacing-lg);
@@ -154,8 +166,10 @@
   font-family: var(--font-body);
   font-size: 16px;
   font-weight: 500;
-  color: var(--text-muted); /* Muted text */
-  text-decoration: line-through; /* Strikethrough */
+  color: var(--text-muted);
+  /* Muted text */
+  text-decoration: line-through;
+  /* Strikethrough */
 }
 
 .checkbox-btn-checked {
@@ -164,7 +178,8 @@
   border-radius: 6px;
   border: 2px solid var(--text-muted);
   background-color: var(--text-muted);
-  color: var(--bg-primary); /* White/light */
+  color: var(--bg-primary);
+  /* White/light */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -209,4 +224,11 @@
 .refresh-icon {
   font-size: 16px;
   line-height: 1;
+}
+
+.shopping-loading {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--text-muted);
+  font-family: var(--font-body);
 }

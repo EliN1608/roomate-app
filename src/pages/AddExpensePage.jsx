@@ -1,33 +1,120 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import './AddExpensePage.css';
 
 export default function AddExpensePage() {
   const navigate = useNavigate();
+  const { user, apartmentId } = useAuth();
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const [payer, setPayer] = useState('אני');
+  const [payer, setPayer] = useState(user?.id || '');
+  const [roommates, setRoommates] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const [roommates, setRoommates] = useState([
-    { id: 1, name: 'ג׳יין סמית׳', checked: true, share: '33.3%' },
-    { id: 2, name: 'רוברט צ׳ן', checked: true, share: '33.3%' },
-    { id: 3, name: 'אני (ג׳ון דו)', checked: true, share: '33.4%' }
-  ]);
+  useEffect(() => {
+    if (user?.id) {
+      setPayer(user.id);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!apartmentId) return;
+    const fetchMembers = async () => {
+      const { data } = await supabase
+        .from('members')
+        .select('user_id, role')
+        .eq('apartment_id', apartmentId);
+      
+      setRoommates((data || []).map(m => ({
+        id: m.user_id,
+        name: m.user_id === user?.id ? 'אני' : `שותף`,
+        checked: true,
+        share: data?.length ? 
+          `${(100 / data.length).toFixed(1)}%` : '0%'
+      })));
+    };
+    fetchMembers();
+  }, [apartmentId]);
 
   const toggleRoommate = (id) => {
-    setRoommates(roommates.map(rm => 
+    const updated = roommates.map(rm => 
       rm.id === id ? { ...rm, checked: !rm.checked } : rm
-    ));
+    );
+    const checkedCount = updated.filter(r => r.checked).length;
+    setRoommates(updated.map(rm => ({
+      ...rm,
+      share: rm.checked && checkedCount ? `${(100 / checkedCount).toFixed(1)}%` : '0%'
+    })));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!description.trim() || !amount.trim()) {
       alert('נא למלא את כל השדות');
       return;
     }
-    alert(`ההוצאה "${description}" על סך ₪${amount} נשמרה בהצלחה!`);
-    navigate('/dashboard');
+    try {
+      setLoading(true);
+
+      // 1. Save expense to Supabase
+      const { error: expenseError } = await supabase
+        .from('expenses')
+        .insert({
+          apartment_id: apartmentId,
+          paid_by: user.id,
+          description: description,
+          amount: parseFloat(amount),
+          date: new Date().toISOString().split('T')[0]
+        });
+      
+      if (expenseError) throw expenseError;
+
+      // 2. Update balances for each checked roommate
+      const checkedRoommates = roommates.filter(r => r.checked);
+      const shareAmount = parseFloat(amount) / checkedRoommates.length;
+
+      for (const roommate of checkedRoommates) {
+        if (roommate.id === user.id) continue;
+        
+        // Check if balance exists
+        const { data: existingBalance } = await supabase
+          .from('balances')
+          .select('id, amount')
+          .eq('apartment_id', apartmentId)
+          .eq('user_id', roommate.id)
+          .single();
+        
+        if (existingBalance) {
+          // Update existing balance
+          await supabase
+            .from('balances')
+            .update({ 
+              amount: existingBalance.amount + shareAmount,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingBalance.id);
+        } else {
+          // Create new balance
+          await supabase
+            .from('balances')
+            .insert({
+              apartment_id: apartmentId,
+              user_id: roommate.id,
+              amount: shareAmount
+            });
+        }
+      }
+
+      alert('ההוצאה נשמרה בהצלחה!');
+      navigate('/expenses');
+
+    } catch (err) {
+      alert('שגיאה בשמירת הוצאה: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -78,9 +165,14 @@ export default function AddExpensePage() {
                 value={payer}
                 onChange={(e) => setPayer(e.target.value)}
               >
-                <option value="אני">אני</option>
-                <option value="ג׳יין סמית׳">ג׳יין סמית׳</option>
-                <option value="רוברט צ׳ן">רוברט צ׳ן</option>
+                <option value={user?.id}>אני</option>
+                {roommates
+                  .filter(r => r.id !== user?.id)
+                  .map(r => (
+                    <option key={r.id} value={r.id}>
+                      שותף
+                    </option>
+                  ))}
               </select>
             </div>
           </div>
@@ -113,8 +205,8 @@ export default function AddExpensePage() {
         </div>
 
         {/* 4. Full Width Lime Button */}
-        <button type="submit" className="save-expense-btn">
-          שמור הוצאה
+        <button type="submit" className="save-expense-btn" disabled={loading}>
+          {loading ? 'שומר...' : 'שמור הוצאה'}
         </button>
       </form>
     </div>

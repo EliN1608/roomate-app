@@ -204,3 +204,11 @@
     padding: 8px 0;
   }
 }
+
+.history-loading,
+.history-empty {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+}

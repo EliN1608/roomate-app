@@ -1,31 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import './ExpensesHistoryPage.css';
 
 export default function ExpensesHistoryPage() {
   const navigate = useNavigate();
+  const { user, apartmentId } = useAuth();
+  const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // 'all' | 'paid' | 'owed'
 
-  const expensesData = [
-    { id: 1, icon: '🛒', name: 'סופרמרקט שבועי', date: '28.06.2026', amount: '240.50', paidBy: 'אני' },
-    { id: 2, icon: '⚡', name: 'חשבון חשמל', date: '25.06.2026', amount: '350.00', paidBy: 'מיכל לוי' },
-    { id: 3, icon: '📡', name: 'אינטרנט וטלוויזיה', date: '20.06.2026', amount: '120.00', paidBy: 'אני' },
-    { id: 4, icon: '🧹', name: 'חומרי ניקוי', date: '18.06.2026', amount: '45.80', paidBy: 'דניאל כץ' },
-    { id: 5, icon: '💧', name: 'חשבון מים', date: '15.06.2026', amount: '90.20', paidBy: 'אני' },
-    { id: 6, icon: '🥬', name: 'ירקניה', date: '10.06.2026', amount: '65.00', paidBy: 'מיכל לוי' }
-  ];
+  const fetchExpenses = async () => {
+    if (!apartmentId) return;
+    try {
+      setLoading(true);
+      let query = supabase
+        .from('expenses')
+        .select('id, description, amount, date, paid_by')
+        .eq('apartment_id', apartmentId)
+        .order('date', { ascending: false });
+      
+      if (filter === 'paid') {
+        query = query.eq('paid_by', user.id);
+      } else if (filter === 'owed') {
+        query = query.neq('paid_by', user.id);
+      }
+      
+      const { data } = await query;
+      setExpenses(data || []);
+    } catch (err) {
+      console.error('Error fetching expenses:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Filter logic
-  // 'paid' -> Paid by 'אני'
-  // 'owed' -> Paid by others (which means others paid and I owe them, or vice versa depending on phrasing)
-  const filteredExpenses = expensesData.filter(exp => {
-    if (filter === 'paid') return exp.paidBy === 'אני';
-    if (filter === 'owed') return exp.paidBy !== 'אני';
-    return true;
-  });
+  useEffect(() => {
+    fetchExpenses();
+  }, [apartmentId, filter]);
 
-  // Calculate sum of currently filtered expenses
-  const totalSum = filteredExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0).toFixed(2);
+  const totalSum = expenses
+    .reduce((sum, exp) => sum + Number(exp.amount), 0)
+    .toFixed(2);
+
+  if (loading) return (
+    <div className="expenses-history-container">
+      <div className="history-loading">טוען הוצאות...</div>
+    </div>
+  );
 
   return (
     <div className="expenses-history-container" id="expenses-history-page">
@@ -52,7 +75,7 @@ export default function ExpensesHistoryPage() {
           className={`filter-btn ${filter === 'owed' ? 'active' : ''}`}
           onClick={() => setFilter('owed')}
         >
-          חייב לי
+          حייב לי
         </button>
       </div>
 
@@ -63,28 +86,32 @@ export default function ExpensesHistoryPage() {
       </div>
 
       {/* Expenses List */}
-      <div className="expenses-list">
-        {filteredExpenses.map((exp) => (
-          <div key={exp.id} className="expense-row-card">
-            {/* Right: icon in square */}
-            <div className="expense-icon-square">
-              {exp.icon}
-            </div>
+      {expenses.length === 0 ? (
+        <div className="history-empty">אין הוצאות עדיין</div>
+      ) : (
+        <div className="expenses-list">
+          {expenses.map((exp) => (
+            <div key={exp.id} className="expense-row-card">
+              {/* Right: icon in square */}
+              <div className="expense-icon-square">
+                💰
+              </div>
 
-            {/* Middle: expense name + paidBy */}
-            <div className="expense-info">
-              <div className="expense-name">{exp.name}</div>
-              <div className="expense-payer">שילם: {exp.paidBy}</div>
-            </div>
+              {/* Middle: expense name + paidBy */}
+              <div className="expense-info">
+                <div className="expense-name">{exp.description}</div>
+                <div className="expense-payer">{exp.paid_by === user?.id ? 'שילמתי אני' : 'שילם שותף'}</div>
+              </div>
 
-            {/* Left: amount in mono font, date below */}
-            <div className="expense-meta">
-              <div className="expense-amount">₪{exp.amount}</div>
-              <div className="expense-date">{exp.date}</div>
+              {/* Left: amount in mono font, date below */}
+              <div className="expense-meta">
+                <div className="expense-amount">₪{Number(exp.amount).toFixed(2)}</div>
+                <div className="expense-date">{new Date(exp.date).toLocaleDateString('he-IL')}</div>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Bottom CTA Button */}
       <button

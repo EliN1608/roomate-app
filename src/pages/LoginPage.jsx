@@ -26,21 +26,36 @@ export default function LoginPage() {
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     try {
-      await login(email, password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
       navigate('/dashboard');
     } catch (err) {
-      alert('שגיאה: ' + err.message);
+      setError('Invalid email or password');
     }
   };
 
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     try {
-      await register(email, password, fullName);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+        },
+      });
+      if (error) throw error;
       navigate('/dashboard');
     } catch (err) {
-      alert('שגיאה: ' + err.message);
+      setError(err.message || 'Registration failed');
     }
   };
 

@@ -12,8 +12,15 @@ export default function OnboardingPage() {
   const [apartmentName, setApartmentName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [generatedInviteCode, setGeneratedInviteCode] = useState('');
+  const [street, setStreet] = useState('');
+  const [buildingNumber, setBuildingNumber] = useState('');
+  const [apartmentNumber, setApartmentNumber] = useState('');
+  const [createdInviteCode, setCreatedInviteCode] = useState('');
+  const [apartmentCreated, setApartmentCreated] = useState(false);
 
   const handleCreate = async (e) => {
+    console.log('USER OBJECT:', user);
+    console.log('USER ID:', user?.id);
     e.preventDefault();
     if (!apartmentName.trim()) {
       alert('נא להזין שם דירה');
@@ -32,7 +39,10 @@ export default function OnboardingPage() {
         .insert({
           name: apartmentName,
           invite_code: generatedCode,
-          created_by: user.id
+          created_by: user.id,
+          street: street,
+          building_number: buildingNumber,
+          apartment_number: apartmentNumber
         })
         .select()
         .single();
@@ -51,10 +61,8 @@ export default function OnboardingPage() {
       if (memberError) throw memberError;
       
       // 4. Set generated invite code state before navigating
-      setGeneratedInviteCode(generatedCode);
-      
-      // 5. Navigate to dashboard
-      navigate('/dashboard');
+      setCreatedInviteCode(generatedCode);
+      setApartmentCreated(true);
       
     } catch (err) {
       alert('שגיאה ביצירת דירה: ' + err.message);
@@ -154,30 +162,82 @@ export default function OnboardingPage() {
 
         {/* Tab Content */}
         {activeTab === 'create' ? (
-          <form onSubmit={handleCreate} className="onboarding-tab-form">
-            <div className="onboarding-field-group">
-              <label className="onboarding-field-label" htmlFor="create-apt-name">שם הדירה</label>
-              <input
-                id="create-apt-name"
-                type="text"
-                className="onboarding-field-input"
-                placeholder="לדוגמה: דירת הרצל / בית החלומות"
-                value={apartmentName}
-                onChange={(e) => setApartmentName(e.target.value)}
-              />
+          apartmentCreated ? (
+            <div className="invite-code-success">
+              <div className="success-title">הדירה נוצרה! 🎉</div>
+              <div className="success-subtitle">קוד ההזמנה לדירה שלך:</div>
+              <div className="invite-code-display">{createdInviteCode}</div>
+              <div className="success-hint">שתפו את הקוד עם השותפים שלכם</div>
+              <button 
+                type="button" 
+                className="onboarding-submit-btn"
+                onClick={() => navigate('/dashboard')}
+              >
+                כניסה לדירה
+              </button>
             </div>
+          ) : (
+            <form onSubmit={handleCreate} className="onboarding-tab-form">
+              <div className="onboarding-field-group">
+                <label className="onboarding-field-label" htmlFor="create-apt-name">שם הדירה</label>
+                <input
+                  id="create-apt-name"
+                  type="text"
+                  className="onboarding-field-input"
+                  placeholder="לדוגמה: דירת הרצל"
+                  value={apartmentName}
+                  onChange={(e) => setApartmentName(e.target.value)}
+                />
+              </div>
 
-            <button type="submit" className="onboarding-submit-btn" disabled={loading}>
-              {loading ? 'טוען...' : 'צור דירה חדשה'}
-            </button>
+              <div className="onboarding-field-group">
+                <label className="onboarding-field-label" htmlFor="create-street">רחוב</label>
+                <input
+                  id="create-street"
+                  type="text"
+                  className="onboarding-field-input"
+                  placeholder="לדוגמה: הרצל"
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                />
+              </div>
 
-            {/* Nested Dark Card */}
-            <div className="nested-onboarding-card">
-              <div className="nested-card-label">לאחר היצירה תקבלו קוד הזמנה</div>
-              <div className="nested-card-code">{generatedInviteCode || 'XXXXXX'}</div>
-              <div className="nested-card-subtext">שתפו את הקוד עם השותפים שלכם</div>
-            </div>
-          </form>
+              <div className="onboarding-field-group">
+                <label className="onboarding-field-label" htmlFor="create-building-number">מספר בניין</label>
+                <input
+                  id="create-building-number"
+                  type="text"
+                  className="onboarding-field-input"
+                  placeholder="לדוגמה: 12"
+                  value={buildingNumber}
+                  onChange={(e) => setBuildingNumber(e.target.value)}
+                />
+              </div>
+
+              <div className="onboarding-field-group">
+                <label className="onboarding-field-label" htmlFor="create-apartment-number">מספר דירה</label>
+                <input
+                  id="create-apartment-number"
+                  type="text"
+                  className="onboarding-field-input"
+                  placeholder="לדוגמה: 4"
+                  value={apartmentNumber}
+                  onChange={(e) => setApartmentNumber(e.target.value)}
+                />
+              </div>
+
+              <button type="submit" className="onboarding-submit-btn" disabled={loading}>
+                {loading ? 'טוען...' : 'צור דירה חדשה'}
+              </button>
+
+              {/* Nested Dark Card */}
+              <div className="nested-onboarding-card">
+                <div className="nested-card-label">לאחר היצירה תקבלו קוד הזמנה</div>
+                <div className="nested-card-code">{generatedInviteCode || 'XXXXXX'}</div>
+                <div className="nested-card-subtext">שתפו את הקוד עם השותפים שלכם</div>
+              </div>
+            </form>
+          )
         ) : (
           <form onSubmit={handleJoin} className="onboarding-tab-form">
             <div className="onboarding-field-group">

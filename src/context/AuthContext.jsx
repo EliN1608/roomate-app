@@ -9,25 +9,38 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [apartmentId, setApartmentId] = useState(null);
   const [hasApartment, setHasApartment] = useState(false);
+  const [apartmentName, setApartmentName] = useState('');
 
   const checkApartment = async (userId) => {
     try {
-      const { data } = await supabase
+      const { data: memberData } = await supabase
         .from('members')
         .select('apartment_id')
         .eq('user_id', userId)
         .single();
       
-      if (data) {
-        setApartmentId(data.apartment_id);
+      if (memberData) {
+        setApartmentId(memberData.apartment_id);
         setHasApartment(true);
+
+        const { data: apartmentData } = await supabase
+          .from('apartments')
+          .select('name')
+          .eq('id', memberData.apartment_id)
+          .single();
+        
+        if (apartmentData) {
+          setApartmentName(apartmentData.name);
+        }
       } else {
         setApartmentId(null);
         setHasApartment(false);
+        setApartmentName('');
       }
     } catch (err) {
       setApartmentId(null);
       setHasApartment(false);
+      setApartmentName('');
     }
   };
 
@@ -91,6 +104,7 @@ export function AuthProvider({ children }) {
       loading,
       apartmentId,
       hasApartment,
+      apartmentName,
       login, 
       register,
       logout 

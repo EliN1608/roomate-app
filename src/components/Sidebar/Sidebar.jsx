@@ -1,8 +1,20 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import './Sidebar.css';
 
 export default function Sidebar() {
+  const navigate = useNavigate();
+  const { user, apartmentName } = useAuth();
+
+  const fullName = user?.user_metadata?.full_name || 'משתמש';
+  const initials = fullName
+    .split(' ')
+    .map(w => w[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase();
+
   const navItems = [
     {
       name: 'בית',
@@ -74,10 +86,16 @@ export default function Sidebar() {
 
       {/* Bottom Section: User Info */}
       <div className="sidebar-footer">
-        <div className="sidebar-user-avatar">JD</div>
+        <div 
+          className="sidebar-user-avatar" 
+          onClick={() => navigate('/profile')}
+          style={{ cursor: 'pointer' }}
+        >
+          {initials}
+        </div>
         <div className="sidebar-user-details">
-          <div className="sidebar-user-name">יואב כהן</div>
-          <div className="sidebar-user-apartment">דירה ברחוב הרצל</div>
+          <div className="sidebar-user-name">{fullName}</div>
+          <div className="sidebar-user-apartment">{apartmentName || 'לא מחובר לדירה'}</div>
         </div>
       </div>
     </aside>

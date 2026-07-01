@@ -1,17 +1,51 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import './ProfilePage.css';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
+  const { user, apartmentId, apartmentName, apartmentAddress, apartmentInviteCode, logout } = useAuth();
+
+  const [membersCount, setMembersCount] = useState(0);
+  const [members, setMembers] = useState([]);
+
+  useEffect(() => {
+    if (!apartmentId) return;
+    const fetchMembers = async () => {
+      const { count } = await supabase
+        .from('members')
+        .select('id', { count: 'exact' })
+        .eq('apartment_id', apartmentId);
+      setMembersCount(count || 0);
+    };
+    fetchMembers();
+  }, [apartmentId]);
+
+  useEffect(() => {
+    if (!apartmentId) return;
+    const fetchMembers = async () => {
+      const { data } = await supabase
+        .from('members')
+        .select('user_id, role')
+        .eq('apartment_id', apartmentId);
+      setMembers(data || []);
+    };
+    fetchMembers();
+  }, [apartmentId]);
 
   const handlePasswordChange = () => {
     console.log('Change password clicked');
   };
 
-  const handleLogout = () => {
-    console.log('Logout clicked');
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
   };
+
+  const fullName = user?.user_metadata?.full_name || 'משתמש';
+  const initials = fullName.substring(0, 2);
 
   return (
     <div className="profile-page-wrapper">
@@ -20,11 +54,11 @@ export default function ProfilePage() {
       {/* 1. USER CARD */}
       <section className="profile-card user-card">
         <div className="user-card-content">
-          <div className="user-avatar">יא</div>
+          <div className="user-avatar">{initials}</div>
           <div className="user-info">
-            <h2 className="user-name">יואב כהן</h2>
-            <p className="user-email">yoav@example.com</p>
-            <span className="user-role-badge">מנהל דירה</span>
+            <h2 className="user-name">{fullName}</h2>
+            <p className="user-email">{user?.email || ''}</p>
+            <span className="user-role-badge">חבר/ת דירה</span>
           </div>
         </div>
       </section>
@@ -35,59 +69,50 @@ export default function ProfilePage() {
         
         <div className="info-row">
           <span className="info-label">שם הדירה</span>
-          <span className="info-value">דירה ברחוב הרצל</span>
+          <span className="info-value">{apartmentName || 'לא מוגדר'}</span>
+        </div>
+
+        <div className="info-row">
+          <span className="info-label">כתובת הדירה</span>
+          <span className="info-value">{apartmentAddress || 'לא מוגדר'}</span>
         </div>
         
         <div className="info-row">
           <span className="info-label">מספר שותפים</span>
-          <span className="info-value">3 שותפים</span>
+          <span className="info-value">{membersCount} שותפים</span>
         </div>
         
         <div className="info-row no-border">
           <span className="info-label">קוד הזמנה</span>
-          <span className="info-value invite-code">AB72KX</span>
+          <span className="info-value invite-code">{apartmentInviteCode || 'לא מוגדר'}</span>
         </div>
       </section>
 
       {/* 3. ROOMMATES CARD */}
       <section className="profile-card roommates-card">
         <h3 className="card-section-header">שותפים בדירה</h3>
-
-        {/* Roommate 1 */}
-        <div className="roommate-row">
-          <div className="roommate-left">
-            <div className="roommate-avatar bg-dark">יא</div>
-            <div className="roommate-details">
-              <span className="roommate-name">יואב כהן</span>
-              <span className="self-badge">את/ה</span>
+        {members.map((member, idx) => (
+          <div key={member.user_id} 
+            className={`roommate-row ${idx === members.length - 1 ? 'no-border' : ''}`}>
+            <div className="roommate-left">
+              <div className={`roommate-avatar ${member.role === 'admin' ? 'bg-dark' : 'bg-lime'}`}>
+                {member.user_id.substring(0, 2).toUpperCase()}
+              </div>
+              <span className="roommate-name">
+                {member.user_id === user?.id ? 
+                  (user?.user_metadata?.full_name || 'את/ה') : 
+                  `שותף ${idx + 1}`}
+              </span>
+              {member.user_id === user?.id && 
+                <span className="self-badge">את/ה</span>}
+            </div>
+            <div className="roommate-right">
+              <span className={`role-tag ${member.role === 'admin' ? 'admin' : 'member'}`}>
+                {member.role === 'admin' ? 'מנהל' : 'שותף/ה'}
+              </span>
             </div>
           </div>
-          <div className="roommate-right">
-            <span className="role-tag admin">מנהל</span>
-          </div>
-        </div>
-
-        {/* Roommate 2 */}
-        <div className="roommate-row">
-          <div className="roommate-left">
-            <div className="roommate-avatar bg-lime">מכ</div>
-            <span className="roommate-name">מיכל לוי</span>
-          </div>
-          <div className="roommate-right">
-            <span className="role-tag member">שותף/ה</span>
-          </div>
-        </div>
-
-        {/* Roommate 3 */}
-        <div className="roommate-row no-border">
-          <div className="roommate-left">
-            <div className="roommate-avatar bg-dark">דנ</div>
-            <span className="roommate-name">דניאל כץ</span>
-          </div>
-          <div className="roommate-right">
-            <span className="role-tag member">שותף/ה</span>
-          </div>
-        </div>
+        ))}
       </section>
 
       {/* 4. ACTIONS CARD */}

@@ -9,25 +9,50 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [apartmentId, setApartmentId] = useState(null);
   const [hasApartment, setHasApartment] = useState(false);
+  const [apartmentName, setApartmentName] = useState('');
+  const [apartmentAddress, setApartmentAddress] = useState('');
+  const [apartmentInviteCode, setApartmentInviteCode] = useState('');
 
   const checkApartment = async (userId) => {
     try {
-      const { data } = await supabase
+      // First get apartment_id from members
+      const { data: memberData } = await supabase
         .from('members')
-        .select('apartment_id')
+        .select('apartment_id, role')
         .eq('user_id', userId)
         .single();
       
-      if (data) {
-        setApartmentId(data.apartment_id);
+      if (memberData) {
+        setApartmentId(memberData.apartment_id);
         setHasApartment(true);
+
+        // Then fetch apartment details
+        const { data: apartmentData } = await supabase
+          .from('apartments')
+          .select('name, street, building_number, apartment_number, invite_code')
+          .eq('id', memberData.apartment_id)
+          .single();
+        
+        if (apartmentData) {
+          setApartmentName(apartmentData.name);
+          setApartmentInviteCode(apartmentData.invite_code);
+          setApartmentAddress(
+            `${apartmentData.street || ''} ${apartmentData.building_number || ''}, דירה ${apartmentData.apartment_number || ''}`
+          );
+        }
       } else {
         setApartmentId(null);
         setHasApartment(false);
+        setApartmentName('');
+        setApartmentAddress('');
+        setApartmentInviteCode('');
       }
     } catch (err) {
       setApartmentId(null);
       setHasApartment(false);
+      setApartmentName('');
+      setApartmentAddress('');
+      setApartmentInviteCode('');
     }
   };
 
@@ -91,6 +116,9 @@ export function AuthProvider({ children }) {
       loading,
       apartmentId,
       hasApartment,
+      apartmentName,
+      apartmentAddress,
+      apartmentInviteCode,
       login, 
       register,
       logout 

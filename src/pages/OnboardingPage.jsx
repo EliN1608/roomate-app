@@ -15,6 +15,7 @@ export default function OnboardingPage() {
   const [street, setStreet] = useState('');
   const [buildingNumber, setBuildingNumber] = useState('');
   const [apartmentNumber, setApartmentNumber] = useState('');
+  const [city, setCity] = useState('');
   const [createdInviteCode, setCreatedInviteCode] = useState('');
   const [apartmentCreated, setApartmentCreated] = useState(false);
 
@@ -42,7 +43,8 @@ export default function OnboardingPage() {
           created_by: user.id,
           street: street,
           building_number: buildingNumber,
-          apartment_number: apartmentNumber
+          apartment_number: apartmentNumber,
+          city: city
         })
         .select()
         .single();
@@ -84,21 +86,21 @@ export default function OnboardingPage() {
       const { data: apartment, error: findError } = await supabase
         .from('apartments')
         .select('id, name')
-        .eq('invite_code', inviteCode.toUpperCase())
-        .single();
+        .eq('invite_code', inviteCode.toUpperCase().trim())
+        .maybeSingle();
       
-      if (findError || !apartment) {
+      if (!apartment) {
         alert('קוד הזמנה לא נמצא. נסו שנית.');
         return;
       }
       
-      // 2. Check if already a member
+      // 2. Check if already a member of THIS specific apartment
       const { data: existingMember } = await supabase
         .from('members')
         .select('id')
         .eq('user_id', user.id)
         .eq('apartment_id', apartment.id)
-        .single();
+        .maybeSingle();
       
       if (existingMember) {
         alert('אתם כבר חברים בדירה זו!');
@@ -106,7 +108,19 @@ export default function OnboardingPage() {
         return;
       }
       
-      // 3. Add user as member
+      // 3. Check user is not already in another apartment
+      const { data: anyMembership } = await supabase
+        .from('members')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (anyMembership) {
+        alert('אתם כבר מחוברים לדירה אחרת. התנתקו תחילה.');
+        return;
+      }
+      
+      // 4. Add user as member
       const { error: memberError } = await supabase
         .from('members')
         .insert({
@@ -117,7 +131,6 @@ export default function OnboardingPage() {
       
       if (memberError) throw memberError;
       
-      // 4. Navigate to dashboard
       navigate('/dashboard');
       
     } catch (err) {
@@ -187,6 +200,18 @@ export default function OnboardingPage() {
                   placeholder="לדוגמה: דירת הרצל"
                   value={apartmentName}
                   onChange={(e) => setApartmentName(e.target.value)}
+                />
+              </div>
+
+              <div className="onboarding-field-group">
+                <label className="onboarding-field-label" htmlFor="create-city">עיר</label>
+                <input
+                  id="create-city"
+                  type="text"
+                  className="onboarding-field-input"
+                  placeholder="לדוגמה: תל אביב, ירושלים, חיפה"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
                 />
               </div>
 

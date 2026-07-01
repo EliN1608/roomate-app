@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import './DashboardPage.css';
 
 export default function DashboardPage() {
-  const { user, apartmentId } = useAuth();
+  const navigate = useNavigate();
+  const { user, apartmentId, hasApartment } = useAuth();
   const [expenses, setExpenses] = useState([]);
   const [balance, setBalance] = useState(0);
   const [shoppingCount, setShoppingCount] = useState(0);
@@ -68,12 +69,37 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    if (!apartmentId) return;
+    if (!apartmentId) {
+      setLoading(false);
+      return;
+    }
     fetchDashboardData();
   }, [apartmentId]);
 
   if (loading) {
     return <div className="dashboard-loading">טוען נתונים...</div>;
+  }
+
+  if (!hasApartment) {
+    return (
+      <div className="dashboard-container" id="dashboard-page">
+        <div className="no-apartment-banner">
+          <div className="banner-title">אין לך דירה עדיין 🏠</div>
+          <div className="banner-subtitle">
+            צור דירה חדשה או הצטרף לדירה קיימת
+          </div>
+          <div className="banner-actions">
+            <button 
+              type="button"
+              className="banner-btn-primary"
+              onClick={() => navigate('/onboarding')}
+            >
+              צור או הצטרף לדירה
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

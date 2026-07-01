@@ -6,7 +6,7 @@ import './ProfilePage.css';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { user, apartmentId, apartmentName, apartmentAddress, apartmentInviteCode, logout } = useAuth();
+  const { user, apartmentId, apartmentName, apartmentAddress, apartmentInviteCode, apartmentCity, userRole, logout } = useAuth();
 
   const [membersCount, setMembersCount] = useState(0);
   const [members, setMembers] = useState([]);
@@ -44,6 +44,25 @@ export default function ProfilePage() {
     navigate('/login');
   };
 
+  const handleLeaveApartment = async () => {
+    const confirmed = window.confirm(
+      'האם אתם בטוחים שברצונכם לעזוב את הדירה?'
+    );
+    if (!confirmed) return;
+    try {
+      const { error } = await supabase
+        .from('members')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('apartment_id', apartmentId);
+      if (error) throw error;
+      alert('עזבתם את הדירה בהצלחה');
+      navigate('/dashboard');
+    } catch (err) {
+      alert('שגיאה: ' + err.message);
+    }
+  };
+
   const fullName = user?.user_metadata?.full_name || 'משתמש';
   const initials = fullName.substring(0, 2);
 
@@ -58,7 +77,9 @@ export default function ProfilePage() {
           <div className="user-info">
             <h2 className="user-name">{fullName}</h2>
             <p className="user-email">{user?.email || ''}</p>
-            <span className="user-role-badge">חבר/ת דירה</span>
+            <span className="user-role-badge">
+              {userRole === 'admin' ? 'מנהל דירה' : 'שותף/ה'}
+            </span>
           </div>
         </div>
       </section>
@@ -75,6 +96,11 @@ export default function ProfilePage() {
         <div className="info-row">
           <span className="info-label">כתובת הדירה</span>
           <span className="info-value">{apartmentAddress || 'לא מוגדר'}</span>
+        </div>
+
+        <div className="info-row">
+          <span className="info-label">עיר</span>
+          <span className="info-value">{apartmentCity || 'לא מוגדר'}</span>
         </div>
         
         <div className="info-row">
@@ -125,6 +151,13 @@ export default function ProfilePage() {
             onClick={handlePasswordChange}
           >
             שינוי סיסמה
+          </button>
+          <button 
+            type="button" 
+            className="action-btn leave-apartment-btn"
+            onClick={handleLeaveApartment}
+          >
+            עזוב דירה
           </button>
           <button 
             type="button" 

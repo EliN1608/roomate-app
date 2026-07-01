@@ -10,14 +10,16 @@ export function AuthProvider({ children }) {
   const [apartmentId, setApartmentId] = useState(null);
   const [hasApartment, setHasApartment] = useState(false);
   const [apartmentName, setApartmentName] = useState('');
+  const [apartmentAddress, setApartmentAddress] = useState('');
+  const [apartmentInviteCode, setApartmentInviteCode] = useState('');
 
   const checkApartment = async (userId) => {
     try {
       const { data: memberData } = await supabase
         .from('members')
-        .select('apartment_id')
+        .select('apartment_id, role')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
       
       if (memberData) {
         setApartmentId(memberData.apartment_id);
@@ -25,27 +27,34 @@ export function AuthProvider({ children }) {
 
         const { data: apartmentData } = await supabase
           .from('apartments')
-          .select('name')
+          .select('name, street, building_number, apartment_number, invite_code')
           .eq('id', memberData.apartment_id)
           .single();
         
         if (apartmentData) {
           setApartmentName(apartmentData.name);
+          setApartmentInviteCode(apartmentData.invite_code);
+          setApartmentAddress(
+            `${apartmentData.street || ''} ${apartmentData.building_number || ''}, דירה ${apartmentData.apartment_number || ''}`
+          );
         }
       } else {
         setApartmentId(null);
         setHasApartment(false);
         setApartmentName('');
+        setApartmentAddress('');
+        setApartmentInviteCode('');
       }
     } catch (err) {
       setApartmentId(null);
       setHasApartment(false);
       setApartmentName('');
+      setApartmentAddress('');
+      setApartmentInviteCode('');
     }
   };
 
   useEffect(() => {
-    // Check existing session on mount
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
       setIsLoggedIn(!!session?.user);
@@ -58,7 +67,6 @@ export function AuthProvider({ children }) {
       setLoading(false);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setUser(session?.user ?? null);
@@ -77,17 +85,13 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (email, password) => {
-    const { error } = await supabase.auth.signInWithPassword({ 
-      email, 
-      password 
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   };
 
   const register = async (email, password, fullName) => {
     const { error } = await supabase.auth.signUp({ 
-      email, 
-      password,
+      email, password,
       options: { data: { full_name: fullName } }
     });
     if (error) throw error;
@@ -99,15 +103,10 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{ 
-      user, 
-      isLoggedIn, 
-      loading,
-      apartmentId,
-      hasApartment,
-      apartmentName,
-      login, 
-      register,
-      logout 
+      user, isLoggedIn, loading,
+      apartmentId, hasApartment,
+      apartmentName, apartmentAddress, apartmentInviteCode,
+      login, register, logout 
     }}>
       {!loading && children}
     </AuthContext.Provider>

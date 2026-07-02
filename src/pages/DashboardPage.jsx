@@ -134,11 +134,6 @@ export default function DashboardPage() {
       <Link to="/expenses/add" className="cta-button-link">
         + הוסף הוצאה חדשה
       </Link>
-
-      {/* 5. Dashed Widget Placeholder */}
-      <div className="dashed-widget">
-        <span className="dashed-widget-text">הוסף ווידג׳ט מותאם אישית</span>
-      </div>
     </div>
   );
 }

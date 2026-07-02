@@ -22,19 +22,35 @@ export default function AddExpensePage() {
   useEffect(() => {
     if (!apartmentId) return;
     const fetchMembers = async () => {
-      const { data } = await supabase
+      // 1. Fetch members
+      const { data: membersData } = await supabase
         .from('members')
-        .select('user_id, role, profiles(full_name)')
+        .select('user_id, role')
         .eq('apartment_id', apartmentId);
       
-      setRoommates((data || []).map(m => ({
+      if (!membersData) return;
+
+      // 2. Fetch profiles for those user_ids
+      const userIds = membersData.map(m => m.user_id);
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, full_name')
+        .in('user_id', userIds);
+      
+      // 3. Merge profiles
+      const profileMap = {};
+      (profilesData || []).forEach(p => {
+        profileMap[p.user_id] = p.full_name;
+      });
+
+      setRoommates((membersData || []).map(m => ({
         id: m.user_id,
         name: m.user_id === user?.id ? 
           'אני' : 
-          (m.profiles?.full_name || 'שותף'),
+          (profileMap[m.user_id] || 'שותף'),
         checked: true,
-        share: data?.length ? 
-          `${(100 / data.length).toFixed(1)}%` : '0%'
+        share: membersData?.length ? 
+          `${(100 / membersData.length).toFixed(1)}%` : '0%'
       })));
     };
     fetchMembers();

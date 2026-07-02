@@ -26,11 +26,33 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!apartmentId) return;
     const fetchMembers = async () => {
-      const { data } = await supabase
+      // 1. Fetch members
+      const { data: membersData } = await supabase
         .from('members')
-        .select('user_id, role, profiles(full_name)')
+        .select('user_id, role')
         .eq('apartment_id', apartmentId);
-      setMembers(data || []);
+      
+      if (!membersData) return;
+
+      // 2. Fetch profiles for those user_ids
+      const userIds = membersData.map(m => m.user_id);
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, full_name')
+        .in('user_id', userIds);
+      
+      // 3. Merge members with profiles
+      const profileMap = {};
+      (profilesData || []).forEach(p => {
+        profileMap[p.user_id] = p.full_name;
+      });
+
+      const merged = membersData.map(m => ({
+        ...m,
+        full_name: profileMap[m.user_id] || null
+      }));
+
+      setMembers(merged);
     };
     fetchMembers();
   }, [apartmentId]);
@@ -124,12 +146,12 @@ export default function ProfilePage() {
               <div className={`roommate-avatar ${member.role === 'admin' ? 'bg-dark' : 'bg-lime'}`}>
                 {member.user_id === user?.id ?
                   (user?.user_metadata?.full_name || 'מש').substring(0, 2).toUpperCase() :
-                  (member.profiles?.full_name || 'שו').substring(0, 2).toUpperCase()}
+                  (member.full_name || 'שו').substring(0, 2).toUpperCase()}
               </div>
               <span className="roommate-name">
                 {member.user_id === user?.id ? 
                   (user?.user_metadata?.full_name || 'את/ה') : 
-                  (member.profiles?.full_name || `שותף ${idx + 1}`)}
+                  (member.full_name || `שותף ${idx + 1}`)}
               </span>
               {member.user_id === user?.id && 
                 <span className="self-badge">את/ה</span>}

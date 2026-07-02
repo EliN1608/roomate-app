@@ -14,34 +14,25 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!apartmentId) return;
     const fetchMembers = async () => {
-      const { count } = await supabase
-        .from('members')
-        .select('id', { count: 'exact' })
-        .eq('apartment_id', apartmentId);
-      setMembersCount(count || 0);
-    };
-    fetchMembers();
-  }, [apartmentId]);
-
-  useEffect(() => {
-    if (!apartmentId) return;
-    const fetchMembers = async () => {
-      // 1. Fetch members
+      // Fetch members
       const { data: membersData } = await supabase
         .from('members')
         .select('user_id, role')
         .eq('apartment_id', apartmentId);
       
       if (!membersData) return;
+      
+      // Set count
+      setMembersCount(membersData.length);
 
-      // 2. Fetch profiles for those user_ids
+      // Fetch profiles for those user_ids
       const userIds = membersData.map(m => m.user_id);
       const { data: profilesData } = await supabase
         .from('profiles')
         .select('user_id, full_name')
         .in('user_id', userIds);
       
-      // 3. Merge members with profiles
+      // Merge members with profiles
       const profileMap = {};
       (profilesData || []).forEach(p => {
         profileMap[p.user_id] = p.full_name;

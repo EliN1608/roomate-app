@@ -249,6 +249,16 @@
   background-color: rgba(255, 68, 68, 0.04);
 }
 
+.leave-apartment-btn {
+  background-color: transparent;
+  border: 1.5px solid var(--error);
+  color: var(--error);
+  font-weight: 700;
+}
+.leave-apartment-btn:hover {
+  background-color: rgba(255, 68, 68, 0.04);
+}
+
 .join-apartment-btn {
   background-color: var(--accent);
   color: var(--bg-surface);

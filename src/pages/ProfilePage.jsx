@@ -57,7 +57,7 @@ export default function ProfilePage() {
         .eq('apartment_id', apartmentId);
       if (error) throw error;
       alert('עזבתם את הדירה בהצלחה');
-      window.location.href = '/dashboard';
+      window.location.href = '/onboarding';
     } catch (err) {
       alert('שגיאה: ' + err.message);
     }
@@ -169,17 +169,6 @@ export default function ProfilePage() {
         </div>
       </section>
 
-      {/* 5. APARTMENT ACTIONS CARD */}
-      <section className="profile-card apartment-actions-card">
-        <h3 className="card-section-header">הדירה שלי</h3>
-        <button 
-          type="button" 
-          className="action-btn join-apartment-btn"
-          onClick={() => navigate('/onboarding')}
-        >
-          צור או הצטרף לדירה
-        </button>
-      </section>
     </div>
   );
 }

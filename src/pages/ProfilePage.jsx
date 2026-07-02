@@ -28,7 +28,7 @@ export default function ProfilePage() {
     const fetchMembers = async () => {
       const { data } = await supabase
         .from('members')
-        .select('user_id, role')
+        .select('user_id, role, profiles(full_name)')
         .eq('apartment_id', apartmentId);
       setMembers(data || []);
     };
@@ -122,12 +122,14 @@ export default function ProfilePage() {
             className={`roommate-row ${idx === members.length - 1 ? 'no-border' : ''}`}>
             <div className="roommate-left">
               <div className={`roommate-avatar ${member.role === 'admin' ? 'bg-dark' : 'bg-lime'}`}>
-                {member.user_id.substring(0, 2).toUpperCase()}
+                {member.user_id === user?.id ?
+                  (user?.user_metadata?.full_name || 'מש').substring(0, 2).toUpperCase() :
+                  (member.profiles?.full_name || 'שו').substring(0, 2).toUpperCase()}
               </div>
               <span className="roommate-name">
                 {member.user_id === user?.id ? 
                   (user?.user_metadata?.full_name || 'את/ה') : 
-                  `שותף ${idx + 1}`}
+                  (member.profiles?.full_name || `שותף ${idx + 1}`)}
               </span>
               {member.user_id === user?.id && 
                 <span className="self-badge">את/ה</span>}

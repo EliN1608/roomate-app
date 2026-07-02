@@ -24,12 +24,14 @@ export default function AddExpensePage() {
     const fetchMembers = async () => {
       const { data } = await supabase
         .from('members')
-        .select('user_id, role')
+        .select('user_id, role, profiles(full_name)')
         .eq('apartment_id', apartmentId);
       
       setRoommates((data || []).map(m => ({
         id: m.user_id,
-        name: m.user_id === user?.id ? 'אני' : `שותף`,
+        name: m.user_id === user?.id ? 
+          'אני' : 
+          (m.profiles?.full_name || 'שותף'),
         checked: true,
         share: data?.length ? 
           `${(100 / data.length).toFixed(1)}%` : '0%'

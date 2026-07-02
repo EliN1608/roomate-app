@@ -4,19 +4,19 @@
    ============================================================ */
 
 .login-page-container {
-  background-color: #F5F5F5;
+  background-color: var(--bg-primary);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   direction: rtl;
   font-family: 'Inter', sans-serif;
-  color: #0F0F0F;
+  color: var(--bg-surface);
   box-sizing: border-box;
 }
 
 /* 1. TOP BAR */
 .login-top-bar {
-  background-color: #F5F5F5;
+  background-color: var(--bg-primary);
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   padding: 0 48px;
   height: 64px;
@@ -35,11 +35,11 @@
 }
 
 .logo-roo {
-  color: #0F0F0F;
+  color: var(--bg-surface);
 }
 
 .logo-mate {
-  color: #C7FF2E;
+  color: var(--accent);
 }
 
 .login-top-left {
@@ -50,11 +50,11 @@
 }
 
 .login-prompt-text {
-  color: #555555;
+  color: var(--text-muted);
 }
 
 .login-prompt-link {
-  color: #C7FF2E;
+  color: var(--accent);
   font-weight: 700;
   background: none;
   border: none;
@@ -70,7 +70,7 @@
 
 /* 2. MAIN CONTENT */
 .login-main-content {
-  background-color: #F5F5F5;
+  background-color: var(--bg-primary);
   min-height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
@@ -83,7 +83,7 @@
 
 /* Centered card */
 .login-card {
-  background: #FFFFFF;
+  background: var(--text-on-dark);
   border: 1.5px solid rgba(0, 0, 0, 0.08);
   border-radius: 24px;
   padding: 48px;
@@ -116,12 +116,12 @@
 }
 
 .tab-button.active {
-  color: #0F0F0F;
-  border-bottom: 2.5px solid #C7FF2E;
+  color: var(--bg-surface);
+  border-bottom: 2.5px solid var(--accent);
 }
 
 .tab-button.inactive {
-  color: #555555;
+  color: var(--text-muted);
 }
 
 /* TAB PANEL CONTENT */
@@ -134,14 +134,14 @@
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 700;
   font-size: 26px;
-  color: #0F0F0F;
+  color: var(--bg-surface);
   margin: 0 0 8px 0;
   text-align: right;
 }
 
 .login-subtitle {
   font-size: 15px;
-  color: #555555;
+  color: var(--text-muted);
   margin: 0 0 32px 0;
   text-align: right;
   line-height: 1.4;
@@ -162,7 +162,7 @@
 
 .login-label {
   font-size: 13px;
-  color: #555555;
+  color: var(--text-muted);
   font-weight: 700;
   margin-bottom: 4px;
 }
@@ -174,7 +174,7 @@
 }
 
 .forgot-password-link {
-  color: #C7FF2E;
+  color: var(--accent);
   font-size: 12px;
   background: none;
   border: none;
@@ -189,29 +189,29 @@
 }
 
 .login-input {
-  background-color: #FFFFFF;
+  background-color: var(--text-on-dark);
   border: 1.5px solid rgba(0, 0, 0, 0.15);
   border-radius: 12px;
   padding: 12px 16px;
   font-size: 15px;
   width: 100%;
   box-sizing: border-box;
-  color: #0F0F0F;
+  color: var(--bg-surface);
   font-family: inherit;
   outline: none;
   transition: border-color 0.2s ease;
 }
 
 .login-input:focus {
-  border-color: #C7FF2E;
+  border-color: var(--accent);
 }
 
 /* Primary Button */
 .login-submit-btn {
   margin-top: 8px;
   width: 100%;
-  background-color: #C7FF2E;
-  color: #0F0F0F;
+  background-color: var(--accent);
+  color: var(--bg-surface);
   font-weight: 700;
   font-size: 15px;
   border-radius: 14px;
@@ -242,13 +242,13 @@
 
 .divider-text {
   font-size: 13px;
-  color: #555555;
+  color: var(--text-muted);
 }
 
 /* Google Button */
 .google-btn {
   width: 100%;
-  background-color: #FFFFFF;
+  background-color: var(--text-on-dark);
   border: 1.5px solid rgba(0, 0, 0, 0.15);
   border-radius: 14px;
   padding: 12px;
@@ -260,7 +260,7 @@
   transition: background-color 0.2s ease;
   font-family: inherit;
   font-size: 15px;
-  color: #0F0F0F;
+  color: var(--bg-surface);
 }
 
 .google-btn:hover {
@@ -270,14 +270,14 @@
 /* Terms below card */
 .login-terms {
   font-size: 12px;
-  color: #555555;
+  color: var(--text-muted);
   text-align: center;
   margin-top: 16px;
   line-height: 1.5;
 }
 
 .terms-link {
-  color: #C7FF2E;
+  color: var(--accent);
   text-decoration: none;
   font-weight: 600;
 }
@@ -291,11 +291,11 @@
   font-size: 14px;
   margin-top: 24px;
   text-align: center;
-  color: #555555;
+  color: var(--text-muted);
 }
 
 .switch-tab-link {
-  color: #C7FF2E;
+  color: var(--accent);
   font-weight: 700;
   background: none;
   border: none;

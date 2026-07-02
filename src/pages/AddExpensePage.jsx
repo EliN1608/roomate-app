@@ -63,7 +63,7 @@ export default function AddExpensePage() {
         .from('expenses')
         .insert({
           apartment_id: apartmentId,
-          paid_by: user.id,
+          paid_by: payer,
           description: description,
           amount: parseFloat(amount),
           date: new Date().toISOString().split('T')[0]

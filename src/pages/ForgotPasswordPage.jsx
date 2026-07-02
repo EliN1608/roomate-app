@@ -1,15 +1,28 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 import './ForgotPasswordPage.css';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Sending password reset email to:', email);
-    setSent(true);
+    if (!email.trim()) {
+      alert('נא להזין כתובת אימייל');
+      return;
+    }
+    try {
+      const { error } = await supabase.auth
+        .resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + '/login'
+        });
+      if (error) throw error;
+      setSent(true);
+    } catch (err) {
+      alert('שגיאה: ' + err.message);
+    }
   };
 
   return (

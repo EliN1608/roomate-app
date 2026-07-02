@@ -75,7 +75,7 @@ export default function ExpensesHistoryPage() {
           className={`filter-btn ${filter === 'owed' ? 'active' : ''}`}
           onClick={() => setFilter('owed')}
         >
-          حייב לי
+          חייב לי
         </button>
       </div>
 

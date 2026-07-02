@@ -17,10 +17,9 @@ export default function OnboardingPage() {
   const [apartmentNumber, setApartmentNumber] = useState('');
   const [createdInviteCode, setCreatedInviteCode] = useState('');
   const [apartmentCreated, setApartmentCreated] = useState(false);
+  const [city, setCity] = useState('');
 
   const handleCreate = async (e) => {
-    console.log('USER OBJECT:', user);
-    console.log('USER ID:', user?.id);
     e.preventDefault();
     if (!apartmentName.trim()) {
       alert('נא להזין שם דירה');
@@ -30,8 +29,11 @@ export default function OnboardingPage() {
       setLoading(true);
       
       // 1. Generate invite code
-      const generatedCode = Math.random().toString(36)
-        .substring(2, 8).toUpperCase();
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      const generatedCode = Array.from(
+        { length: 6 }, 
+        () => chars[Math.floor(Math.random() * chars.length)]
+      ).join('');
       
       // 2. Create apartment in Supabase
       const { data: apartment, error: apartmentError } = await supabase
@@ -42,7 +44,8 @@ export default function OnboardingPage() {
           created_by: user.id,
           street: street,
           building_number: buildingNumber,
-          apartment_number: apartmentNumber
+          apartment_number: apartmentNumber,
+          city: city
         })
         .select()
         .single();
@@ -84,7 +87,9 @@ export default function OnboardingPage() {
       const { data: apartment, error: findError } = await supabase
         .from('apartments')
         .select('id, name')
-        .eq('invite_code', inviteCode.toUpperCase())
+        .eq('invite_code', inviteCode.toUpperCase().trim()
+          .replace(/0/g, 'O')
+          .replace(/1/g, 'I'))
         .single();
       
       if (findError || !apartment) {
@@ -98,7 +103,7 @@ export default function OnboardingPage() {
         .select('id')
         .eq('user_id', user.id)
         .eq('apartment_id', apartment.id)
-        .single();
+        .maybeSingle();
       
       if (existingMember) {
         alert('אתם כבר חברים בדירה זו!');
@@ -187,6 +192,19 @@ export default function OnboardingPage() {
                   placeholder="לדוגמה: דירת הרצל"
                   value={apartmentName}
                   onChange={(e) => setApartmentName(e.target.value)}
+                />
+              </div>
+
+              <div className="onboarding-field-group">
+                <label className="onboarding-field-label" 
+                  htmlFor="create-city">עיר</label>
+                <input
+                  id="create-city"
+                  type="text"
+                  className="onboarding-field-input"
+                  placeholder="לדוגמה: תל אביב, ירושלים, חיפה"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
                 />
               </div>
 

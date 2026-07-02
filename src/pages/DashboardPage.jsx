@@ -47,7 +47,7 @@ export default function DashboardPage() {
         .select('amount')
         .eq('apartment_id', apartmentId)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
       
       setBalance(balanceData?.amount || 0);
 

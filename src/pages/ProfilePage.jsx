@@ -6,7 +6,7 @@ import './ProfilePage.css';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { user, apartmentId, apartmentName, apartmentAddress, apartmentInviteCode, apartmentCity, userRole, logout, refreshApartment } = useAuth();
+  const { user, apartmentId, userRole, logout } = useAuth();
 
   const [membersCount, setMembersCount] = useState(0);
   const [members, setMembers] = useState([]);
@@ -16,6 +16,20 @@ export default function ProfilePage() {
   const [editStreet, setEditStreet] = useState('');
   const [editBuilding, setEditBuilding] = useState('');
   const [editApartmentNum, setEditApartmentNum] = useState('');
+  const [apartmentData, setApartmentData] = useState(null);
+
+  useEffect(() => {
+    if (!apartmentId) return;
+    const fetchApartment = async () => {
+      const { data } = await supabase
+        .from('apartments')
+        .select('name, street, building_number, apartment_number, invite_code, city')
+        .eq('id', apartmentId)
+        .single();
+      if (data) setApartmentData(data);
+    };
+    fetchApartment();
+  }, [apartmentId]);
 
   useEffect(() => {
     if (!apartmentId) return;
@@ -87,12 +101,11 @@ export default function ProfilePage() {
   };
 
   const handleOpenEdit = () => {
-    setEditName(apartmentName || '');
-    setEditCity(apartmentCity || '');
-    const addressParts = apartmentAddress?.split(' ') || [];
-    setEditStreet(addressParts[0] || '');
-    setEditBuilding((addressParts[1] || '').replace(',', ''));
-    setEditApartmentNum(addressParts[3] || '');
+    setEditName(apartmentData?.name || '');
+    setEditCity(apartmentData?.city || '');
+    setEditStreet(apartmentData?.street || '');
+    setEditBuilding(apartmentData?.building_number || '');
+    setEditApartmentNum(apartmentData?.apartment_number || '');
     setIsEditingApartment(true);
   };
 
@@ -108,15 +121,24 @@ export default function ProfilePage() {
           apartment_number: editApartmentNum
         })
         .eq('id', apartmentId);
-
+      
       if (error) throw error;
+      
+      // Update local state immediately
+      setApartmentData(prev => ({
+        ...prev,
+        name: editName,
+        city: editCity,
+        street: editStreet,
+        building_number: editBuilding,
+        apartment_number: editApartmentNum
+      }));
+      setIsEditingApartment(false);
       alert('פרטי הדירה עודכנו בהצלחה!');
-      window.location.reload();
     } catch (err) {
       alert('שגיאה: ' + err.message);
     }
   };
-
 
   const fullName = user?.user_metadata?.full_name || 'משתמש';
   const initials = fullName.substring(0, 2);
@@ -155,17 +177,19 @@ export default function ProfilePage() {
 
         <div className="info-row">
           <span className="info-label">שם הדירה</span>
-          <span className="info-value">{apartmentName || 'לא מוגדר'}</span>
+          <span className="info-value">{apartmentData?.name || 'לא מוגדר'}</span>
         </div>
 
         <div className="info-row">
           <span className="info-label">כתובת הדירה</span>
-          <span className="info-value">{apartmentAddress || 'לא מוגדר'}</span>
+          <span className="info-value">
+            {apartmentData ? `${apartmentData.street || ''} ${apartmentData.building_number || ''}, דירה ${apartmentData.apartment_number || ''}` : 'לא מוגדר'}
+          </span>
         </div>
 
         <div className="info-row">
           <span className="info-label">עיר</span>
-          <span className="info-value">{apartmentCity || 'לא מוגדר'}</span>
+          <span className="info-value">{apartmentData?.city || 'לא מוגדר'}</span>
         </div>
 
         <div className="info-row">
@@ -175,7 +199,7 @@ export default function ProfilePage() {
 
         <div className="info-row no-border">
           <span className="info-label">קוד הזמנה</span>
-          <span className="info-value invite-code">{apartmentInviteCode || 'לא מוגדר'}</span>
+          <span className="info-value invite-code">{apartmentData?.invite_code || 'לא מוגדר'}</span>
         </div>
       </section>
 

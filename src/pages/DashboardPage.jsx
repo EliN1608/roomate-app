@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import './DashboardPage.css';
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const { user, apartmentId } = useAuth();
   const [expenses, setExpenses] = useState([]);
   const [balance, setBalance] = useState(0);
@@ -70,7 +71,10 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    if (!apartmentId) return;
+    if (!apartmentId) {
+      setLoading(false);
+      return;
+    }
     fetchDashboardData();
   }, [apartmentId]);
 
@@ -83,8 +87,18 @@ export default function DashboardPage() {
       {/* 1. Balance Card (full width, black background) */}
       <div className="balance-card">
         <div className="balance-label">מאזן הדירה שלך</div>
-        <div className="balance-title">יתרה: {balance >= 0 ? '+' : ''}₪{balance}</div>
-        <div className="balance-subtitle">עודכן לאחרונה: {lastUpdated.toLocaleTimeString('he-IL')}</div>
+        <div 
+          className="balance-title"
+          style={{ color: balance > 0 ? 'var(--success)' : balance < 0 ? 'var(--error)' : 'var(--text-on-dark)' }}
+        >
+          יתרה: {balance >= 0 ? '+' : ''}₪{Math.abs(balance).toFixed(2)}
+        </div>
+        <div className="balance-subtitle">
+          {balance > 0 ? 'השותפים חייבים לך' : balance < 0 ? 'אתה חייב לשותפים' : 'המאזן מאוזן ✓'}
+        </div>
+        <div className="balance-update-time" style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: 'var(--spacing-sm)' }}>
+          עודכן לאחרונה: {lastUpdated.toLocaleTimeString('he-IL')}
+        </div>
         <button className="balance-btn" onClick={() => alert('הסדרת תשלום')}>הסדרת תשלום</button>
       </div>
 
@@ -98,6 +112,31 @@ export default function DashboardPage() {
           <div className="metric-label">פריטים לקנייה</div>
           <div className="metric-value">{shoppingCount}</div>
         </div>
+      </div>
+
+      {/* Quick Actions Row */}
+      <div className="quick-actions-row">
+        <button 
+          className="quick-action-btn"
+          onClick={() => navigate('/expenses/add')}
+        >
+          <span className="quick-action-icon">💸</span>
+          <span className="quick-action-label">הוסף הוצאה</span>
+        </button>
+        <button 
+          className="quick-action-btn"
+          onClick={() => navigate('/shopping')}
+        >
+          <span className="quick-action-icon">🛒</span>
+          <span className="quick-action-label">רשימת קניות</span>
+        </button>
+        <button 
+          className="quick-action-btn"
+          onClick={() => navigate('/profile')}
+        >
+          <span className="quick-action-icon">👥</span>
+          <span className="quick-action-label">שותפים</span>
+        </button>
       </div>
 
       {/* 3. Recent Expenses Section */}
@@ -124,8 +163,13 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* Amount on the left (end) */}
-                <div className="expense-amount">₪{Number(exp.amount).toFixed(2)}</div>
+                {/* Amount and Paid By on the left (end) */}
+                <div className="expense-right">
+                  <div className="expense-amount">₪{Number(exp.amount).toFixed(2)}</div>
+                  <div className={`expense-paid-by ${exp.paid_by === user?.id ? 'paid-by-me' : 'paid-by-other'}`}>
+                    {exp.paid_by === user?.id ? 'שילמתי אני' : 'שילם שותף'}
+                  </div>
+                </div>
               </div>
             ))
           )}

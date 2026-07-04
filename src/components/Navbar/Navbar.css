@@ -42,9 +42,12 @@
 
 @media (max-width: 1023px) {
   .navbar-mobile {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    display: flex;
+    flex-direction: row-reverse;
     align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    padding: 0 var(--spacing-md);
     width: 100%;
   }
 }
@@ -108,15 +111,16 @@
 
 /* Mobile styles */
 .mobile-hamburger {
-  grid-column: 3; /* Left side in RTL */
-  justify-self: end;
-  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
   border: none;
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  line-height: 1;
   color: var(--text-primary);
   font-size: 24px;
-  cursor: pointer;
-  padding: var(--spacing-xs);
-  line-height: 1;
   transition: color 0.2s ease;
 }
 
@@ -125,8 +129,6 @@
 }
 
 .mobile-logo {
-  grid-column: 2; /* Center */
-  justify-self: center;
   font-family: var(--font-display);
   font-size: 20px;
   font-weight: 700;
@@ -135,16 +137,14 @@
 }
 
 .mobile-avatar {
-  grid-column: 1; /* Right side in RTL */
-  justify-self: start;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 36px;
   height: 36px;
   border-radius: 50%;
   background-color: var(--bg-surface); /* Black card bg */
   color: var(--accent); /* Lime text */
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-family: var(--font-body);
   font-size: 14px;
   font-weight: 700;
@@ -159,15 +159,20 @@
   background-color: rgba(0, 0, 0, 0.4);
   z-index: 1000;
   display: flex;
-  justify-content: flex-end; /* Slide in from left side in RTL (which is flex-end) */
+  justify-content: flex-start; /* Slide in from left side */
   animation: fadeIn 0.2s ease;
 }
 
 .mobile-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
   width: 280px;
-  height: 100%;
-  background-color: var(--bg-primary);
-  border-right: 1px solid var(--border);
+  background-color: var(--bg-surface);
+  z-index: 1000;
+  direction: rtl;
+  padding: var(--spacing-lg);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -221,20 +226,21 @@
 .drawer-user-details {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  text-align: right;
 }
 
 .drawer-name {
-  font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-on-dark);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
 }
 
 .drawer-apartment {
-  font-family: var(--font-body);
-  font-size: 12px;
   color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 13px;
 }
 
 .mobile-drawer-content {
@@ -246,34 +252,29 @@
 }
 
 .drawer-section-title {
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 700;
   color: var(--text-muted);
-  letter-spacing: 0.5px;
-  margin-bottom: var(--spacing-xs);
+  font-size: 12px;
+  font-family: var(--font-body);
+  margin-bottom: var(--spacing-sm);
+  text-align: right;
 }
 
 .drawer-btn {
-  display: block;
   text-align: right;
-  background: var(--bg-surface);
-  color: var(--text-on-dark);
-  border: 1px solid var(--border);
-  padding: 12px var(--spacing-md);
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: var(--radius-input);
-  cursor: pointer;
   width: 100%;
-  transition: all 0.2s ease;
+  padding: var(--spacing-md) 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-on-dark);
+  font-family: var(--font-body);
+  font-size: 15px;
+  cursor: pointer;
+  direction: rtl;
 }
 
 .drawer-btn:hover {
-  background-color: var(--bg-surface-mid);
   color: var(--accent);
-  border-color: var(--accent);
 }
 
 @keyframes fadeIn {

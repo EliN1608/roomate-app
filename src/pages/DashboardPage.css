@@ -73,7 +73,7 @@
 
 .metric-card {
   flex: 1;
-  background-color: #FFFFFF;
+  background-color: var(--text-on-dark);
   border: 1.5px solid var(--bg-surface); /* 1.5px solid #0F0F0F */
   border-radius: var(--radius-card); /* 24px */
   padding: 20px;
@@ -95,6 +95,43 @@
   font-size: 24px;
   font-weight: 700;
   color: var(--text-primary); /* #0F0F0F */
+}
+
+/* Quick Actions Row */
+.quick-actions-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.quick-action-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md) var(--spacing-sm);
+  background: var(--text-on-dark);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-card);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.quick-action-btn:hover {
+  border-color: var(--accent);
+}
+
+.quick-action-icon {
+  font-size: 24px;
+}
+
+.quick-action-label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
 }
 
 /* 3. Recent Expenses Section */
@@ -138,7 +175,7 @@
 }
 
 .expense-row-card {
-  background-color: #FFFFFF;
+  background-color: var(--text-on-dark);
   border: 1.5px solid var(--bg-surface); /* 1.5px solid #0F0F0F */
   border-radius: 16px;
   padding: 14px var(--spacing-md);
@@ -186,6 +223,31 @@
   font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
+}
+
+.expense-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-xs);
+}
+
+.expense-paid-by {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-badge);
+}
+
+.paid-by-me {
+  background-color: var(--accent-soft);
+  color: var(--bg-surface);
+}
+
+.paid-by-other {
+  background-color: var(--border);
+  color: var(--text-muted);
 }
 
 /* 4. CTA Button */

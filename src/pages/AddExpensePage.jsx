@@ -76,6 +76,10 @@ export default function AddExpensePage() {
       alert('נא למלא את כל השדות');
       return;
     }
+    if (parseFloat(amount) <= 0) {
+      alert('הסכום חייב להיות גדול מ-0');
+      return;
+    }
     try {
       setLoading(true);
 

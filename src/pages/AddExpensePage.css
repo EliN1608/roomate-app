@@ -48,7 +48,7 @@
 
 /* 2. White Card with Form Fields */
 .form-card {
-  background-color: #FFFFFF;
+  background-color: var(--text-on-dark);
   border: 1.5px solid var(--bg-surface); /* Black border */
   border-radius: var(--radius-card); /* 24px */
   padding: 24px;
@@ -84,7 +84,7 @@
 }
 
 .form-input, .form-select {
-  background-color: #FFFFFF;
+  background-color: var(--text-on-dark);
   border: 1.5px solid var(--bg-surface); /* Black border */
   border-radius: var(--radius-input); /* 12px */
   padding: 12px;

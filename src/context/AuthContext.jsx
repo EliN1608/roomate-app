@@ -32,7 +32,7 @@ export function AuthProvider({ children }) {
           .from('apartments')
           .select('name, street, building_number, apartment_number, invite_code, city')
           .eq('id', memberData.apartment_id)
-          .single();
+          .maybeSingle();
         
         if (apartmentData) {
           setApartmentName(apartmentData.name);

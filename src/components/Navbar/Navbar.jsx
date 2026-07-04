@@ -9,12 +9,9 @@ export default function Navbar() {
   const { user, apartmentName, logout } = useAuth();
 
   const fullName = user?.user_metadata?.full_name || 'משתמש';
-  const initials = fullName
-    .split(' ')
-    .map(w => w[0])
-    .join('')
-    .substring(0, 2)
-    .toUpperCase();
+  const initials = fullName.length >= 2
+    ? fullName.substring(0, 2).toUpperCase()
+    : fullName.toUpperCase();
 
   const toggleDrawer = () => {
     setIsDrawerOpen(!isDrawerOpen);
@@ -66,7 +63,9 @@ export default function Navbar() {
                 <div className="drawer-avatar">{initials}</div>
                 <div className="drawer-user-details">
                   <div className="drawer-name">{fullName}</div>
-                  <div className="drawer-apartment">{apartmentName || 'לא מחובר לדירה'}</div>
+                  <div className="drawer-apartment">
+                    {apartmentName || 'לא מחובר לדירה'}
+                  </div>
                 </div>
               </div>
             </div>

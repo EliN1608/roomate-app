@@ -226,20 +226,21 @@
 .drawer-user-details {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  text-align: right;
 }
 
 .drawer-name {
-  font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-on-dark);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
 }
 
 .drawer-apartment {
-  font-family: var(--font-body);
-  font-size: 12px;
   color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 13px;
 }
 
 .mobile-drawer-content {
@@ -251,34 +252,29 @@
 }
 
 .drawer-section-title {
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 700;
   color: var(--text-muted);
-  letter-spacing: 0.5px;
-  margin-bottom: var(--spacing-xs);
+  font-size: 12px;
+  font-family: var(--font-body);
+  margin-bottom: var(--spacing-sm);
+  text-align: right;
 }
 
 .drawer-btn {
-  display: block;
   text-align: right;
-  background: var(--bg-surface);
-  color: var(--text-on-dark);
-  border: 1px solid var(--border);
-  padding: 12px var(--spacing-md);
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: var(--radius-input);
-  cursor: pointer;
   width: 100%;
-  transition: all 0.2s ease;
+  padding: var(--spacing-md) 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-on-dark);
+  font-family: var(--font-body);
+  font-size: 15px;
+  cursor: pointer;
+  direction: rtl;
 }
 
 .drawer-btn:hover {
-  background-color: var(--bg-surface-mid);
   color: var(--accent);
-  border-color: var(--accent);
 }
 
 @keyframes fadeIn {

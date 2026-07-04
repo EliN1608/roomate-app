@@ -90,7 +90,7 @@ export default function OnboardingPage() {
         .eq('invite_code', inviteCode.toUpperCase().trim()
           .replace(/0/g, 'O')
           .replace(/1/g, 'I'))
-        .single();
+        .maybeSingle();
       
       if (findError || !apartment) {
         alert('קוד הזמנה לא נמצא. נסו שנית.');

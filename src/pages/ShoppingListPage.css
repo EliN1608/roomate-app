@@ -25,7 +25,7 @@
 
 .add-item-input {
   flex-grow: 1;
-  background-color: #FFFFFF;
+  background-color: var(--text-on-dark);
   border: 1.5px solid var(--bg-surface);
   /* Black border */
   border-radius: var(--radius-input);
@@ -231,4 +231,27 @@
   padding: var(--spacing-xl);
   color: var(--text-muted);
   font-family: var(--font-body);
+}
+
+.shopping-empty-state {
+  text-align: center;
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+.empty-icon {
+  font-size: 48px;
+}
+.empty-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.empty-subtitle {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--text-muted);
 }

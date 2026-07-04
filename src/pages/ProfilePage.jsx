@@ -38,8 +38,6 @@ export default function ProfilePage() {
       const { data: membersData } = await supabase
         .rpc('get_apartment_members', { apt_id: apartmentId });
 
-      console.log('Members data:', membersData);
-
       if (!membersData) return;
 
       // Set count
@@ -52,8 +50,6 @@ export default function ProfilePage() {
         .select('user_id, full_name')
         .in('user_id', userIds);
 
-      console.log('Profiles data:', profilesData);
-
       // Merge members with profiles
       const profileMap = {};
       (profilesData || []).forEach(p => {
@@ -65,15 +61,12 @@ export default function ProfilePage() {
         full_name: profileMap[m.user_id] || null
       }));
 
-      console.log('Merged:', merged);
-
       setMembers(merged);
     };
     fetchMembers();
   }, [apartmentId]);
 
   const handlePasswordChange = () => {
-    console.log('Change password clicked');
   };
 
   const handleLogout = async () => {

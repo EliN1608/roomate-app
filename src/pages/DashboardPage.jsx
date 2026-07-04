@@ -11,6 +11,7 @@ export default function DashboardPage() {
   const [shoppingCount, setShoppingCount] = useState(0);
   const [totalMonth, setTotalMonth] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
 
   const fetchDashboardData = async () => {
     try {
@@ -59,6 +60,7 @@ export default function DashboardPage() {
         .eq('is_done', false);
       
       setShoppingCount(count || 0);
+      setLastUpdated(new Date());
 
     } catch (err) {
       console.error('Error fetching dashboard:', err);
@@ -82,7 +84,7 @@ export default function DashboardPage() {
       <div className="balance-card">
         <div className="balance-label">מאזן הדירה שלך</div>
         <div className="balance-title">יתרה: {balance >= 0 ? '+' : ''}₪{balance}</div>
-        <div className="balance-subtitle">עודכן לאחרונה: לפני 2 דקות</div>
+        <div className="balance-subtitle">עודכן לאחרונה: {lastUpdated.toLocaleTimeString('he-IL')}</div>
         <button className="balance-btn" onClick={() => alert('הסדרת תשלום')}>הסדרת תשלום</button>
       </div>
 

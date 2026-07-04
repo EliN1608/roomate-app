@@ -26,7 +26,7 @@ export default function AddExpensePage() {
         // 1. Use RPC to get all apartment members
         const { data: membersData } = await supabase
           .rpc('get_apartment_members', { apt_id: apartmentId });
-        
+
         if (!membersData) return;
 
         // 2. Fetch profiles for those user_ids
@@ -35,7 +35,7 @@ export default function AddExpensePage() {
           .from('profiles')
           .select('user_id, full_name')
           .in('user_id', userIds);
-        
+
         // 3. Merge profiles
         const profileMap = {};
         (profilesData || []).forEach(p => {
@@ -46,8 +46,8 @@ export default function AddExpensePage() {
         const checkedCount = membersData.length;
         setRoommates(membersData.map(m => ({
           id: m.user_id,
-          name: m.user_id === user?.id ? 
-            'אני' : 
+          name: m.user_id === user?.id ?
+            'אני' :
             (profileMap[m.user_id] || 'שותף'),
           checked: true,
           share: `${(100 / checkedCount).toFixed(1)}%`
@@ -60,7 +60,7 @@ export default function AddExpensePage() {
   }, [apartmentId]);
 
   const toggleRoommate = (id) => {
-    const updated = roommates.map(rm => 
+    const updated = roommates.map(rm =>
       rm.id === id ? { ...rm, checked: !rm.checked } : rm
     );
     const checkedCount = updated.filter(r => r.checked).length;
@@ -89,7 +89,7 @@ export default function AddExpensePage() {
           amount: parseFloat(amount),
           date: new Date().toISOString().split('T')[0]
         });
-      
+
       if (expenseError) throw expenseError;
 
       // 2. Update balances for each checked roommate
@@ -98,20 +98,20 @@ export default function AddExpensePage() {
 
       for (const roommate of checkedRoommates) {
         if (roommate.id === user.id) continue;
-        
+
         // Check if balance exists
         const { data: existingBalance } = await supabase
           .from('balances')
           .select('id, amount')
           .eq('apartment_id', apartmentId)
           .eq('user_id', roommate.id)
-          .single();
-        
+          .maybeSingle();
+
         if (existingBalance) {
           // Update existing balance
           await supabase
             .from('balances')
-            .update({ 
+            .update({
               amount: existingBalance.amount + shareAmount,
               updated_at: new Date().toISOString()
             })
@@ -177,7 +177,7 @@ export default function AddExpensePage() {
                 onChange={(e) => setAmount(e.target.value)}
               />
             </div>
-            
+
             <div className="form-group half-width">
               <label className="form-label" htmlFor="expense-payer">מי שילם?</label>
               <select
@@ -202,13 +202,13 @@ export default function AddExpensePage() {
         {/* 3. Black Card "חלוקה עם" */}
         <div className="split-card">
           <h2 className="split-title">חלוקה עם:</h2>
-          
+
           <div className="split-list">
             {roommates.map((rm) => (
               <div key={rm.id} className="split-row" onClick={() => toggleRoommate(rm.id)}>
                 {/* Right side: name */}
                 <span className="split-name">{rm.name}</span>
-                
+
                 {/* Left side: checkbox + percentage */}
                 <div className="split-controls">
                   <span className="split-percentage">{rm.share}</span>

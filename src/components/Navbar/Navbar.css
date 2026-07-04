@@ -42,9 +42,11 @@
 
 @media (max-width: 1023px) {
   .navbar-mobile {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    display: flex;
     align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    padding: 0 var(--spacing-md);
     width: 100%;
   }
 }
@@ -108,15 +110,16 @@
 
 /* Mobile styles */
 .mobile-hamburger {
-  grid-column: 3; /* Left side in RTL */
-  justify-self: end;
-  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
   border: none;
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  line-height: 1;
   color: var(--text-primary);
   font-size: 24px;
-  cursor: pointer;
-  padding: var(--spacing-xs);
-  line-height: 1;
   transition: color 0.2s ease;
 }
 
@@ -125,8 +128,6 @@
 }
 
 .mobile-logo {
-  grid-column: 2; /* Center */
-  justify-self: center;
   font-family: var(--font-display);
   font-size: 20px;
   font-weight: 700;
@@ -135,16 +136,14 @@
 }
 
 .mobile-avatar {
-  grid-column: 1; /* Right side in RTL */
-  justify-self: start;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 36px;
   height: 36px;
   border-radius: 50%;
   background-color: var(--bg-surface); /* Black card bg */
   color: var(--accent); /* Lime text */
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-family: var(--font-body);
   font-size: 14px;
   font-weight: 700;

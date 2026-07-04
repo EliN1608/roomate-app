@@ -12,6 +12,8 @@ export function AuthProvider({ children }) {
   const [apartmentName, setApartmentName] = useState('');
   const [apartmentAddress, setApartmentAddress] = useState('');
   const [apartmentInviteCode, setApartmentInviteCode] = useState('');
+  const [apartmentCity, setApartmentCity] = useState('');
+  const [userRole, setUserRole] = useState('');
 
   const checkApartment = async (userId) => {
     try {
@@ -24,16 +26,18 @@ export function AuthProvider({ children }) {
       if (memberData) {
         setApartmentId(memberData.apartment_id);
         setHasApartment(true);
+        setUserRole(memberData.role || 'member');
 
         const { data: apartmentData } = await supabase
           .from('apartments')
-          .select('name, street, building_number, apartment_number, invite_code')
+          .select('name, street, building_number, apartment_number, invite_code, city')
           .eq('id', memberData.apartment_id)
           .single();
         
         if (apartmentData) {
           setApartmentName(apartmentData.name);
           setApartmentInviteCode(apartmentData.invite_code);
+          setApartmentCity(apartmentData.city || '');
           setApartmentAddress(
             `${apartmentData.street || ''} ${apartmentData.building_number || ''}, דירה ${apartmentData.apartment_number || ''}`
           );
@@ -44,6 +48,8 @@ export function AuthProvider({ children }) {
         setApartmentName('');
         setApartmentAddress('');
         setApartmentInviteCode('');
+        setApartmentCity('');
+        setUserRole('');
       }
     } catch (err) {
       setApartmentId(null);
@@ -51,6 +57,8 @@ export function AuthProvider({ children }) {
       setApartmentName('');
       setApartmentAddress('');
       setApartmentInviteCode('');
+      setApartmentCity('');
+      setUserRole('');
     }
   };
 
@@ -105,8 +113,10 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={{ 
       user, isLoggedIn, loading,
       apartmentId, hasApartment,
-      apartmentName, apartmentAddress, apartmentInviteCode,
-      login, register, logout 
+      apartmentName, apartmentAddress, 
+      apartmentInviteCode, apartmentCity, userRole,
+      login, register, logout,
+      refreshApartment: () => user ? checkApartment(user.id) : null
     }}>
       {!loading && children}
     </AuthContext.Provider>

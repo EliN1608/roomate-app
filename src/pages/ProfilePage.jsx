@@ -6,10 +6,16 @@ import './ProfilePage.css';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { user, apartmentId, apartmentName, apartmentAddress, apartmentInviteCode, apartmentCity, userRole, logout } = useAuth();
+  const { user, apartmentId, apartmentName, apartmentAddress, apartmentInviteCode, apartmentCity, userRole, logout, refreshApartment } = useAuth();
 
   const [membersCount, setMembersCount] = useState(0);
   const [members, setMembers] = useState([]);
+  const [isEditingApartment, setIsEditingApartment] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editCity, setEditCity] = useState('');
+  const [editStreet, setEditStreet] = useState('');
+  const [editBuilding, setEditBuilding] = useState('');
+  const [editApartmentNum, setEditApartmentNum] = useState('');
 
   useEffect(() => {
     if (!apartmentId) return;
@@ -80,6 +86,38 @@ export default function ProfilePage() {
     }
   };
 
+  const handleOpenEdit = () => {
+    setEditName(apartmentName || '');
+    setEditCity(apartmentCity || '');
+    const addressParts = apartmentAddress?.split(' ') || [];
+    setEditStreet(addressParts[0] || '');
+    setEditBuilding((addressParts[1] || '').replace(',', ''));
+    setEditApartmentNum(addressParts[3] || '');
+    setIsEditingApartment(true);
+  };
+
+  const handleSaveApartment = async () => {
+    try {
+      const { error } = await supabase
+        .from('apartments')
+        .update({
+          name: editName,
+          city: editCity,
+          street: editStreet,
+          building_number: editBuilding,
+          apartment_number: editApartmentNum
+        })
+        .eq('id', apartmentId);
+      
+      if (error) throw error;
+      await refreshApartment();
+      setIsEditingApartment(false);
+      alert('פרטי הדירה עודכנו בהצלחה!');
+    } catch (err) {
+      alert('שגיאה: ' + err.message);
+    }
+  };
+
   const fullName = user?.user_metadata?.full_name || 'משתמש';
   const initials = fullName.substring(0, 2);
 
@@ -103,7 +141,17 @@ export default function ProfilePage() {
 
       {/* 2. APARTMENT CARD */}
       <section className="profile-card apartment-card">
-        <h3 className="card-section-header">פרטי הדירה</h3>
+        <div className="card-header-row">
+          <h2 className="card-title">פרטי הדירה</h2>
+          {userRole === 'admin' && (
+            <button 
+              className="edit-apartment-btn"
+              onClick={handleOpenEdit}
+            >
+              ✏️ עריכה
+            </button>
+          )}
+        </div>
         
         <div className="info-row">
           <span className="info-label">שם הדירה</span>
@@ -187,7 +235,43 @@ export default function ProfilePage() {
           </button>
         </div>
       </section>
+      {isEditingApartment && (
+        <div className="modal-overlay" onClick={() => setIsEditingApartment(false)}>
+          <div className="modal-card" onClick={e => e.stopPropagation()}>
+            <h2 className="modal-title">עריכת פרטי דירה</h2>
+            
+            <div className="modal-field">
+              <label>שם הדירה</label>
+              <input value={editName} onChange={e => setEditName(e.target.value)} />
+            </div>
+            <div className="modal-field">
+              <label>עיר</label>
+              <input value={editCity} onChange={e => setEditCity(e.target.value)} />
+            </div>
+            <div className="modal-field">
+              <label>רחוב</label>
+              <input value={editStreet} onChange={e => setEditStreet(e.target.value)} />
+            </div>
+            <div className="modal-field">
+              <label>מספר בניין</label>
+              <input value={editBuilding} onChange={e => setEditBuilding(e.target.value)} />
+            </div>
+            <div className="modal-field">
+              <label>מספר דירה</label>
+              <input value={editApartmentNum} onChange={e => setEditApartmentNum(e.target.value)} />
+            </div>
 
+            <div className="modal-actions">
+              <button className="modal-save-btn" onClick={handleSaveApartment}>
+                שמור שינויים
+              </button>
+              <button className="modal-cancel-btn" onClick={() => setIsEditingApartment(false)}>
+                ביטול
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

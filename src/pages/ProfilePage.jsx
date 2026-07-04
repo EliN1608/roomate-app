@@ -6,7 +6,7 @@ import './ProfilePage.css';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { user, apartmentId, apartmentName, apartmentAddress, apartmentInviteCode, apartmentCity, userRole, logout, refreshApartment } = useAuth();
+  const { user, apartmentId, userRole, logout } = useAuth();
 
   const [membersCount, setMembersCount] = useState(0);
   const [members, setMembers] = useState([]);
@@ -16,6 +16,20 @@ export default function ProfilePage() {
   const [editStreet, setEditStreet] = useState('');
   const [editBuilding, setEditBuilding] = useState('');
   const [editApartmentNum, setEditApartmentNum] = useState('');
+  const [apartmentData, setApartmentData] = useState(null);
+
+  useEffect(() => {
+    if (!apartmentId) return;
+    const fetchApartment = async () => {
+      const { data } = await supabase
+        .from('apartments')
+        .select('name, street, building_number, apartment_number, invite_code, city')
+        .eq('id', apartmentId)
+        .single();
+      if (data) setApartmentData(data);
+    };
+    fetchApartment();
+  }, [apartmentId]);
 
   useEffect(() => {
     if (!apartmentId) return;
@@ -23,11 +37,11 @@ export default function ProfilePage() {
       // Fetch members
       const { data: membersData } = await supabase
         .rpc('get_apartment_members', { apt_id: apartmentId });
-      
+
       console.log('Members data:', membersData);
-      
+
       if (!membersData) return;
-      
+
       // Set count
       setMembersCount(membersData.length);
 
@@ -37,9 +51,9 @@ export default function ProfilePage() {
         .from('profiles')
         .select('user_id, full_name')
         .in('user_id', userIds);
-      
+
       console.log('Profiles data:', profilesData);
-      
+
       // Merge members with profiles
       const profileMap = {};
       (profilesData || []).forEach(p => {
@@ -87,12 +101,11 @@ export default function ProfilePage() {
   };
 
   const handleOpenEdit = () => {
-    setEditName(apartmentName || '');
-    setEditCity(apartmentCity || '');
-    const addressParts = apartmentAddress?.split(' ') || [];
-    setEditStreet(addressParts[0] || '');
-    setEditBuilding((addressParts[1] || '').replace(',', ''));
-    setEditApartmentNum(addressParts[3] || '');
+    setEditName(apartmentData?.name || '');
+    setEditCity(apartmentData?.city || '');
+    setEditStreet(apartmentData?.street || '');
+    setEditBuilding(apartmentData?.building_number || '');
+    setEditApartmentNum(apartmentData?.apartment_number || '');
     setIsEditingApartment(true);
   };
 
@@ -110,7 +123,16 @@ export default function ProfilePage() {
         .eq('id', apartmentId);
       
       if (error) throw error;
-      await refreshApartment();
+      
+      // Update local state immediately
+      setApartmentData(prev => ({
+        ...prev,
+        name: editName,
+        city: editCity,
+        street: editStreet,
+        building_number: editBuilding,
+        apartment_number: editApartmentNum
+      }));
       setIsEditingApartment(false);
       alert('פרטי הדירה עודכנו בהצלחה!');
     } catch (err) {
@@ -143,8 +165,8 @@ export default function ProfilePage() {
       <section className="profile-card apartment-card">
         <div className="card-header-row">
           <h2 className="card-title">פרטי הדירה</h2>
-          {userRole === 'admin' && (
-            <button 
+          {apartmentId && (
+            <button
               className="edit-apartment-btn"
               onClick={handleOpenEdit}
             >
@@ -152,30 +174,32 @@ export default function ProfilePage() {
             </button>
           )}
         </div>
-        
+
         <div className="info-row">
           <span className="info-label">שם הדירה</span>
-          <span className="info-value">{apartmentName || 'לא מוגדר'}</span>
+          <span className="info-value">{apartmentData?.name || 'לא מוגדר'}</span>
         </div>
 
         <div className="info-row">
           <span className="info-label">כתובת הדירה</span>
-          <span className="info-value">{apartmentAddress || 'לא מוגדר'}</span>
+          <span className="info-value">
+            {apartmentData ? `${apartmentData.street || ''} ${apartmentData.building_number || ''}, דירה ${apartmentData.apartment_number || ''}` : 'לא מוגדר'}
+          </span>
         </div>
 
         <div className="info-row">
           <span className="info-label">עיר</span>
-          <span className="info-value">{apartmentCity || 'לא מוגדר'}</span>
+          <span className="info-value">{apartmentData?.city || 'לא מוגדר'}</span>
         </div>
-        
+
         <div className="info-row">
           <span className="info-label">מספר שותפים</span>
           <span className="info-value">{membersCount} שותפים</span>
         </div>
-        
+
         <div className="info-row no-border">
           <span className="info-label">קוד הזמנה</span>
-          <span className="info-value invite-code">{apartmentInviteCode || 'לא מוגדר'}</span>
+          <span className="info-value invite-code">{apartmentData?.invite_code || 'לא מוגדר'}</span>
         </div>
       </section>
 
@@ -183,7 +207,7 @@ export default function ProfilePage() {
       <section className="profile-card roommates-card">
         <h3 className="card-section-header">שותפים בדירה</h3>
         {members.map((member, idx) => (
-          <div key={member.user_id} 
+          <div key={member.user_id}
             className={`roommate-row ${idx === members.length - 1 ? 'no-border' : ''}`}>
             <div className="roommate-left">
               <div className={`roommate-avatar ${member.role === 'admin' ? 'bg-dark' : 'bg-lime'}`}>
@@ -192,11 +216,11 @@ export default function ProfilePage() {
                   (member.full_name || 'שו').substring(0, 2).toUpperCase()}
               </div>
               <span className="roommate-name">
-                {member.user_id === user?.id ? 
-                  (user?.user_metadata?.full_name || 'את/ה') : 
+                {member.user_id === user?.id ?
+                  (user?.user_metadata?.full_name || 'את/ה') :
                   (member.full_name || `שותף ${idx + 1}`)}
               </span>
-              {member.user_id === user?.id && 
+              {member.user_id === user?.id &&
                 <span className="self-badge">את/ה</span>}
             </div>
             <div className="roommate-right">
@@ -212,22 +236,22 @@ export default function ProfilePage() {
       <section className="profile-card actions-card">
         <h3 className="card-section-header">פעולות</h3>
         <div className="actions-buttons-container">
-          <button 
-            type="button" 
+          <button
+            type="button"
             className="action-btn change-password-btn"
             onClick={handlePasswordChange}
           >
             שינוי סיסמה
           </button>
-          <button 
-            type="button" 
+          <button
+            type="button"
             className="action-btn leave-apartment-btn"
             onClick={handleLeaveApartment}
           >
             עזוב דירה
           </button>
-          <button 
-            type="button" 
+          <button
+            type="button"
             className="action-btn logout-btn"
             onClick={handleLogout}
           >
@@ -239,7 +263,7 @@ export default function ProfilePage() {
         <div className="modal-overlay" onClick={() => setIsEditingApartment(false)}>
           <div className="modal-card" onClick={e => e.stopPropagation()}>
             <h2 className="modal-title">עריכת פרטי דירה</h2>
-            
+
             <div className="modal-field">
               <label>שם הדירה</label>
               <input value={editName} onChange={e => setEditName(e.target.value)} />

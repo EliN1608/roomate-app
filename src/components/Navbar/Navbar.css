@@ -43,6 +43,7 @@
 @media (max-width: 1023px) {
   .navbar-mobile {
     display: flex;
+    flex-direction: row-reverse;
     align-items: center;
     justify-content: space-between;
     height: 56px;
@@ -158,15 +159,20 @@
   background-color: rgba(0, 0, 0, 0.4);
   z-index: 1000;
   display: flex;
-  justify-content: flex-end; /* Slide in from left side in RTL (which is flex-end) */
+  justify-content: flex-start; /* Slide in from left side */
   animation: fadeIn 0.2s ease;
 }
 
 .mobile-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
   width: 280px;
-  height: 100%;
-  background-color: var(--bg-primary);
-  border-right: 1px solid var(--border);
+  background-color: var(--bg-surface);
+  z-index: 1000;
+  direction: rtl;
+  padding: var(--spacing-lg);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;

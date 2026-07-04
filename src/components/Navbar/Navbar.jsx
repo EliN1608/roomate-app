@@ -43,15 +43,15 @@ export default function Navbar() {
 
         {/* Mobile Layout: visible on < 1024px */}
         <div className="navbar-mobile">
-          {/* Hamburger on the left (end in RTL) */}
+          {/* Hamburger on the LEFT in RTL */}
           <button className="mobile-hamburger" onClick={toggleDrawer} aria-label="תפריט">
             ☰
           </button>
           
           {/* Logo centered */}
-          <span className="mobile-logo">ROOMATE</span>
+          <span className="mobile-logo">RooMate</span>
 
-          {/* Avatar on the right (start in RTL) */}
+          {/* Avatar on the RIGHT in RTL */}
           <div className="mobile-avatar">{initials}</div>
         </div>
       </nav>

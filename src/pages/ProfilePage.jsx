@@ -16,9 +16,9 @@ export default function ProfilePage() {
     const fetchMembers = async () => {
       // Fetch members
       const { data: membersData } = await supabase
-        .from('members')
-        .select('user_id, role')
-        .eq('apartment_id', apartmentId);
+        .rpc('get_apartment_members', { apt_id: apartmentId });
+      
+      console.log('Members data:', membersData);
       
       if (!membersData) return;
       
@@ -32,6 +32,8 @@ export default function ProfilePage() {
         .select('user_id, full_name')
         .in('user_id', userIds);
       
+      console.log('Profiles data:', profilesData);
+      
       // Merge members with profiles
       const profileMap = {};
       (profilesData || []).forEach(p => {
@@ -42,6 +44,8 @@ export default function ProfilePage() {
         ...m,
         full_name: profileMap[m.user_id] || null
       }));
+
+      console.log('Merged:', merged);
 
       setMembers(merged);
     };

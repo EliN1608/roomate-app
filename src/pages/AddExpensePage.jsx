@@ -22,36 +22,39 @@ export default function AddExpensePage() {
   useEffect(() => {
     if (!apartmentId) return;
     const fetchMembers = async () => {
-      // 1. Fetch members
-      const { data: membersData } = await supabase
-        .from('members')
-        .select('user_id, role')
-        .eq('apartment_id', apartmentId);
-      
-      if (!membersData) return;
+      try {
+        // 1. Use RPC to get all apartment members
+        const { data: membersData } = await supabase
+          .rpc('get_apartment_members', { apt_id: apartmentId });
+        
+        if (!membersData) return;
 
-      // 2. Fetch profiles for those user_ids
-      const userIds = membersData.map(m => m.user_id);
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('user_id, full_name')
-        .in('user_id', userIds);
-      
-      // 3. Merge profiles
-      const profileMap = {};
-      (profilesData || []).forEach(p => {
-        profileMap[p.user_id] = p.full_name;
-      });
+        // 2. Fetch profiles for those user_ids
+        const userIds = membersData.map(m => m.user_id);
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, full_name')
+          .in('user_id', userIds);
+        
+        // 3. Merge profiles
+        const profileMap = {};
+        (profilesData || []).forEach(p => {
+          profileMap[p.user_id] = p.full_name;
+        });
 
-      setRoommates((membersData || []).map(m => ({
-        id: m.user_id,
-        name: m.user_id === user?.id ? 
-          'אני' : 
-          (profileMap[m.user_id] || 'שותף'),
-        checked: true,
-        share: membersData?.length ? 
-          `${(100 / membersData.length).toFixed(1)}%` : '0%'
-      })));
+        // 4. Set roommates with real names
+        const checkedCount = membersData.length;
+        setRoommates(membersData.map(m => ({
+          id: m.user_id,
+          name: m.user_id === user?.id ? 
+            'אני' : 
+            (profileMap[m.user_id] || 'שותף'),
+          checked: true,
+          share: `${(100 / checkedCount).toFixed(1)}%`
+        })));
+      } catch (err) {
+        console.error('Error fetching members:', err);
+      }
     };
     fetchMembers();
   }, [apartmentId]);
@@ -188,7 +191,7 @@ export default function AddExpensePage() {
                   .filter(r => r.id !== user?.id)
                   .map(r => (
                     <option key={r.id} value={r.id}>
-                      שותף
+                      {r.name}
                     </option>
                   ))}
               </select>

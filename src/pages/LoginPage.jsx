@@ -1,32 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import './LoginPage.css';
 
 export default function LoginPage() {
-  const { login, register } = useAuth();
+  const { refreshApartment, isLoggedIn, hasApartment } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('login');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [isRecovery, setIsRecovery] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   // Form states
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
 
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecovery(true);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (isLoggedIn && !isRecovery) {
+      navigate(hasApartment ? '/dashboard' : '/onboarding', { replace: true });
+    }
+  }, [isLoggedIn, hasApartment, navigate, isRecovery]);
+
+  const navigateAfterAuth = async (userId) => {
+    const hasApt = await refreshApartment(userId);
+    navigate(hasApt ? '/dashboard' : '/onboarding', { replace: true });
+  };
+
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      if (error) throw error;
-      navigate('/dashboard');
+      if (signInError) throw signInError;
+      await navigateAfterAuth(data.user.id);
     } catch (err) {
       setError('אימייל או סיסמה שגויים');
     } finally {
@@ -37,9 +60,13 @@ export default function LoginPage() {
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (password.length < 8) {
+      setError('הסיסמה חייבת להכיל לפחות 8 תווים');
+      return;
+    }
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -48,8 +75,12 @@ export default function LoginPage() {
           },
         },
       });
-      if (error) throw error;
-      navigate('/dashboard');
+      if (signUpError) throw signUpError;
+      if (!data.user) {
+        setError('ההרשמה הצליחה — בדקו את האימייל לאישור החשבון');
+        return;
+      }
+      await navigateAfterAuth(data.user.id);
     } catch (err) {
       setError('ההרשמה נכשלה');
     } finally {
@@ -57,14 +88,36 @@ export default function LoginPage() {
     }
   };
 
-  const handleForgotPassword = async (e) => {
+  const handleRecoverySubmit = async (e) => {
     e.preventDefault();
-    try {
-      await supabase.auth.resetPasswordForEmail(email);
-      alert('קישור לאיפוס סיסמה נשלח לאימייל שלך');
-    } catch (err) {
-      alert('שגיאה: ' + err.message);
+    setError('');
+    if (newPassword.length < 8) {
+      setError('הסיסמה חייבת להכיל לפחות 8 תווים');
+      return;
     }
+    if (newPassword !== confirmPassword) {
+      setError('הסיסמאות אינן תואמות');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      if (updateError) throw updateError;
+      setIsRecovery(false);
+      alert('הסיסמה עודכנה בהצלחה');
+      const hasApt = await refreshApartment();
+      navigate(hasApt ? '/dashboard' : '/onboarding', { replace: true });
+    } catch (err) {
+      setError('עדכון הסיסמה נכשל: ' + err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleForgotPassword = () => {
+    navigate('/password-forgot');
   };
 
   const handleTabSwitch = (tab) => {
@@ -95,6 +148,45 @@ export default function LoginPage() {
       {/* 2. MAIN CONTENT */}
       <main className="login-main-content">
         <div className="login-card">
+          {isRecovery ? (
+            <div className="login-tab-panel">
+              <h1 className="login-title">בחרו סיסמה חדשה</h1>
+              <p className="login-subtitle">הזינו סיסמה חדשה לחשבון שלכם</p>
+              {error && <div className="login-error-msg">{error}</div>}
+              <form onSubmit={handleRecoverySubmit} className="login-form">
+                <div className="login-field">
+                  <label className="login-label" htmlFor="recovery-password">סיסמה חדשה</label>
+                  <input
+                    id="recovery-password"
+                    type="password"
+                    className="login-input"
+                    placeholder="לפחות 8 תווים"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    minLength={8}
+                  />
+                </div>
+                <div className="login-field">
+                  <label className="login-label" htmlFor="recovery-confirm">אימות סיסמה</label>
+                  <input
+                    id="recovery-confirm"
+                    type="password"
+                    className="login-input"
+                    placeholder="הזינו שוב את הסיסמה"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={8}
+                  />
+                </div>
+                <button type="submit" className="login-submit-btn" disabled={submitting}>
+                  {submitting ? 'מעדכן...' : 'עדכון סיסמה'}
+                </button>
+              </form>
+            </div>
+          ) : (
+            <>
           {/* TABS */}
           <div className="tabs-container">
             <button
@@ -205,6 +297,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    minLength={8}
                   />
                 </div>
 
@@ -218,9 +311,12 @@ export default function LoginPage() {
               </p>
             </div>
           )}
+            </>
+          )}
         </div>
 
         {/* 3. BOTTOM LINK */}
+        {!isRecovery && (
         <div className="login-bottom-link">
           {activeTab === 'login' ? (
             <>
@@ -246,6 +342,7 @@ export default function LoginPage() {
             </>
           )}
         </div>
+        )}
       </main>
     </div>
   );

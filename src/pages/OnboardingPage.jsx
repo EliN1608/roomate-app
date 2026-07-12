@@ -6,7 +6,7 @@ import './OnboardingPage.css';
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshApartment } = useAuth();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('create'); // 'create' or 'join'
   const [apartmentName, setApartmentName] = useState('');
@@ -19,8 +19,18 @@ export default function OnboardingPage() {
   const [apartmentCreated, setApartmentCreated] = useState(false);
   const [city, setCity] = useState('');
 
+  const goToDashboard = async () => {
+    await refreshApartment(user?.id);
+    navigate('/dashboard');
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
+    if (!user?.id) {
+      alert('יש להתחבר לפני יצירת דירה');
+      navigate('/login');
+      return;
+    }
     if (!apartmentName.trim()) {
       alert('נא להזין שם דירה');
       return;
@@ -62,8 +72,11 @@ export default function OnboardingPage() {
         });
       
       if (memberError) throw memberError;
+
+      await refreshApartment(user.id);
       
       // 4. Set generated invite code state before navigating
+      setGeneratedInviteCode(generatedCode);
       setCreatedInviteCode(generatedCode);
       setApartmentCreated(true);
       
@@ -76,6 +89,11 @@ export default function OnboardingPage() {
 
   const handleJoin = async (e) => {
     e.preventDefault();
+    if (!user?.id) {
+      alert('יש להתחבר לפני הצטרפות לדירה');
+      navigate('/login');
+      return;
+    }
     if (!inviteCode.trim()) {
       alert('נא להזין קוד הזמנה');
       return;
@@ -96,22 +114,26 @@ export default function OnboardingPage() {
         alert('קוד הזמנה לא נמצא. נסו שנית.');
         return;
       }
-      
-      // 2. Check if already a member
-      const { data: existingMember } = await supabase
+
+      // Block joining a second apartment (AuthContext uses maybeSingle)
+      const { data: anyMembership } = await supabase
         .from('members')
-        .select('id')
+        .select('id, apartment_id')
         .eq('user_id', user.id)
-        .eq('apartment_id', apartment.id)
         .maybeSingle();
-      
-      if (existingMember) {
-        alert('אתם כבר חברים בדירה זו!');
+
+      if (anyMembership) {
+        if (anyMembership.apartment_id === apartment.id) {
+          alert('אתם כבר חברים בדירה זו!');
+        } else {
+          alert('אתם כבר חברים בדירה אחרת. עזבו אותה לפני הצטרפות לדירה חדשה.');
+        }
+        await refreshApartment(user.id);
         navigate('/dashboard');
         return;
       }
       
-      // 3. Add user as member
+      // 2. Add user as member
       const { error: memberError } = await supabase
         .from('members')
         .insert({
@@ -122,7 +144,7 @@ export default function OnboardingPage() {
       
       if (memberError) throw memberError;
       
-      // 4. Navigate to dashboard
+      await refreshApartment(user.id);
       navigate('/dashboard');
       
     } catch (err) {
@@ -176,7 +198,7 @@ export default function OnboardingPage() {
               <button 
                 type="button" 
                 className="onboarding-submit-btn"
-                onClick={() => navigate('/dashboard')}
+                onClick={goToDashboard}
               >
                 כניסה לדירה
               </button>

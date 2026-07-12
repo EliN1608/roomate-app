@@ -11,7 +11,10 @@ export default function ShoppingListPage() {
   const [loading, setLoading] = useState(true);
 
   const fetchItems = async () => {
-    if (!apartmentId) return;
+    if (!apartmentId) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const { data } = await supabase

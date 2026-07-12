@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
@@ -20,14 +20,14 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Unwrapped public and onboarding routes */}
+          {/* Public routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/password-forgot" element={<ForgotPasswordPage />} />
 
-          {/* Layout-wrapped application routes */}
+          {/* Auth required: onboarding (no apartment yet) + app pages */}
           <Route element={<ProtectedRoute />}>
+            <Route path="/onboarding" element={<OnboardingPage />} />
             <Route element={<Layout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/expenses" element={<ExpensesHistoryPage />} />
@@ -46,4 +46,3 @@ function App() {
 }
 
 export default App;
-

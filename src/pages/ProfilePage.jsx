@@ -66,7 +66,20 @@ export default function ProfilePage() {
     fetchMembers();
   }, [apartmentId]);
 
-  const handlePasswordChange = () => {
+  const handlePasswordChange = async () => {
+    const newPassword = window.prompt('הזינו סיסמה חדשה (לפחות 8 תווים):');
+    if (newPassword === null) return;
+    if (newPassword.length < 8) {
+      alert('הסיסמה חייבת להכיל לפחות 8 תווים');
+      return;
+    }
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      alert('הסיסמה עודכנה בהצלחה');
+    } catch (err) {
+      alert('שגיאה בעדכון סיסמה: ' + err.message);
+    }
   };
 
   const handleLogout = async () => {
@@ -79,6 +92,21 @@ export default function ProfilePage() {
       'האם אתם בטוחים שברצונכם לעזוב את הדירה?'
     );
     if (!confirmed) return;
+
+    if (userRole === 'admin') {
+      const adminCount = members.filter((m) => m.role === 'admin').length;
+      if (adminCount <= 1 && members.length > 1) {
+        alert('אתם המנהלים היחידים. העבירו תפקיד מנהל לשותף אחר לפני העזיבה.');
+        return;
+      }
+      if (members.length <= 1) {
+        const leaveAlone = window.confirm(
+          'אתם החברים היחידים בדירה. בעזיבה הדירה תישאר ללא חברים. להמשיך?'
+        );
+        if (!leaveAlone) return;
+      }
+    }
+
     try {
       const { error } = await supabase
         .from('members')
@@ -94,6 +122,10 @@ export default function ProfilePage() {
   };
 
   const handleOpenEdit = () => {
+    if (userRole !== 'admin') {
+      alert('רק מנהל הדירה יכול לערוך את פרטי הדירה');
+      return;
+    }
     setEditName(apartmentData?.name || '');
     setEditCity(apartmentData?.city || '');
     setEditStreet(apartmentData?.street || '');
@@ -103,6 +135,10 @@ export default function ProfilePage() {
   };
 
   const handleSaveApartment = async () => {
+    if (userRole !== 'admin') {
+      alert('רק מנהל הדירה יכול לערוך את פרטי הדירה');
+      return;
+    }
     try {
       const { error } = await supabase
         .from('apartments')
@@ -158,7 +194,7 @@ export default function ProfilePage() {
       <section className="profile-card apartment-card">
         <div className="card-header-row">
           <h2 className="card-title">פרטי הדירה</h2>
-          {apartmentId && (
+          {apartmentId && userRole === 'admin' && (
             <button
               className="edit-apartment-btn"
               onClick={handleOpenEdit}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { formatLocalDate } from '../lib/dates';
 import './ExpensesHistoryPage.css';
 
 export default function ExpensesHistoryPage() {
@@ -9,10 +10,13 @@ export default function ExpensesHistoryPage() {
   const { user, apartmentId } = useAuth();
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all'); // 'all' | 'paid' | 'owed'
+  const [filter, setFilter] = useState('all'); // 'all' | 'paid' | 'others'
 
   const fetchExpenses = async () => {
-    if (!apartmentId) return;
+    if (!apartmentId) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       let query = supabase
@@ -23,7 +27,7 @@ export default function ExpensesHistoryPage() {
       
       if (filter === 'paid') {
         query = query.eq('paid_by', user.id);
-      } else if (filter === 'owed') {
+      } else if (filter === 'others') {
         query = query.neq('paid_by', user.id);
       }
       
@@ -72,10 +76,10 @@ export default function ExpensesHistoryPage() {
         </button>
         <button
           type="button"
-          className={`filter-btn ${filter === 'owed' ? 'active' : ''}`}
-          onClick={() => setFilter('owed')}
+          className={`filter-btn ${filter === 'others' ? 'active' : ''}`}
+          onClick={() => setFilter('others')}
         >
-          חייב לי
+          שילמו שותפים
         </button>
       </div>
 
@@ -92,28 +96,24 @@ export default function ExpensesHistoryPage() {
         <div className="expenses-list">
           {expenses.map((exp) => (
             <div key={exp.id} className="expense-row-card">
-              {/* Right: icon in square */}
               <div className="expense-icon-square">
                 💰
               </div>
 
-              {/* Middle: expense name + paidBy */}
               <div className="expense-info">
                 <div className="expense-name">{exp.description}</div>
                 <div className="expense-payer">{exp.paid_by === user?.id ? 'שילמתי אני' : 'שילם שותף'}</div>
               </div>
 
-              {/* Left: amount in mono font, date below */}
               <div className="expense-meta">
                 <div className="expense-amount">₪{Number(exp.amount).toFixed(2)}</div>
-                <div className="expense-date">{new Date(exp.date).toLocaleDateString('he-IL')}</div>
+                <div className="expense-date">{formatLocalDate(exp.date)}</div>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Bottom CTA Button */}
       <button
         type="button"
         className="add-expense-cta"

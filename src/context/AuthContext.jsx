@@ -15,13 +15,25 @@ export function AuthProvider({ children }) {
   const [apartmentCity, setApartmentCity] = useState('');
   const [userRole, setUserRole] = useState('');
 
+  const clearApartmentState = () => {
+    setApartmentId(null);
+    setHasApartment(false);
+    setApartmentName('');
+    setApartmentAddress('');
+    setApartmentInviteCode('');
+    setApartmentCity('');
+    setUserRole('');
+  };
+
   const checkApartment = async (userId) => {
     try {
-      const { data: memberData } = await supabase
+      const { data: memberData, error: memberError } = await supabase
         .from('members')
         .select('apartment_id, role')
         .eq('user_id', userId)
         .maybeSingle();
+
+      if (memberError) throw memberError;
       
       if (memberData) {
         setApartmentId(memberData.apartment_id);
@@ -42,23 +54,14 @@ export function AuthProvider({ children }) {
             `${apartmentData.street || ''} ${apartmentData.building_number || ''}, דירה ${apartmentData.apartment_number || ''}`
           );
         }
-      } else {
-        setApartmentId(null);
-        setHasApartment(false);
-        setApartmentName('');
-        setApartmentAddress('');
-        setApartmentInviteCode('');
-        setApartmentCity('');
-        setUserRole('');
+        return true;
       }
+
+      clearApartmentState();
+      return false;
     } catch (err) {
-      setApartmentId(null);
-      setHasApartment(false);
-      setApartmentName('');
-      setApartmentAddress('');
-      setApartmentInviteCode('');
-      setApartmentCity('');
-      setUserRole('');
+      clearApartmentState();
+      return false;
     }
   };
 
@@ -69,8 +72,7 @@ export function AuthProvider({ children }) {
       if (session?.user) {
         await checkApartment(session.user.id);
       } else {
-        setApartmentId(null);
-        setHasApartment(false);
+        clearApartmentState();
       }
       setLoading(false);
     });
@@ -82,8 +84,7 @@ export function AuthProvider({ children }) {
         if (session?.user) {
           await checkApartment(session.user.id);
         } else {
-          setApartmentId(null);
-          setHasApartment(false);
+          clearApartmentState();
         }
         setLoading(false);
       }
@@ -116,7 +117,11 @@ export function AuthProvider({ children }) {
       apartmentName, apartmentAddress, 
       apartmentInviteCode, apartmentCity, userRole,
       login, register, logout,
-      refreshApartment: () => user ? checkApartment(user.id) : null
+      refreshApartment: async (userId) => {
+        const id = userId || user?.id;
+        if (!id) return false;
+        return checkApartment(id);
+      }
     }}>
       {!loading && children}
     </AuthContext.Provider>

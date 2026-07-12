@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { firstDayOfLocalMonth, formatLocalDate } from '../lib/dates';
 import './DashboardPage.css';
 
 export default function DashboardPage() {
@@ -29,9 +30,7 @@ export default function DashboardPage() {
       setExpenses(expensesData || []);
 
       // 2. Calculate total this month
-      const now = new Date();
-      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-        .toISOString().split('T')[0];
+      const firstDay = firstDayOfLocalMonth();
       
       const { data: monthExpenses } = await supabase
         .from('expenses')
@@ -159,7 +158,7 @@ export default function DashboardPage() {
                 <div className="expense-info">
                   <div className="expense-name">{exp.description}</div>
                   <div className="expense-date">
-                    {new Date(exp.date).toLocaleDateString('he-IL')}
+                    {formatLocalDate(exp.date)}
                   </div>
                 </div>
 

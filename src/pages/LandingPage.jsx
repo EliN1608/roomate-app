@@ -142,7 +142,7 @@ export default function LandingPage() {
           {/* Left side: Button */}
           <div className="nav-sticky-action">
             <Link to="/login" className="nav-sticky-btn">
-              התחילו בחינם
+              התחברות למערכת
             </Link>
           </div>
 
@@ -165,7 +165,7 @@ export default function LandingPage() {
             <button type="button" className="mobile-dropdown-link" onClick={() => handleScroll(howItWorksRef)}>איך זה עובד</button>
             <button type="button" className="mobile-dropdown-link" onClick={() => handleScroll(reviewsRef)}>ביקורות</button>
             <Link to="/login" className="mobile-dropdown-cta-btn" onClick={() => setIsMenuOpen(false)}>
-              התחילו בחינם
+              התחברות למערכת
             </Link>
           </div>
         )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [registerSuccess, setRegisterSuccess] = useState(null);
+  const holdOnRegisterRef = useRef(false);
 
   // Form states
   const [email, setEmail] = useState('');
@@ -30,12 +31,15 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
-    if (isLoggedIn && !isRecovery && !registerSuccess) {
+    // After signup, auth becomes logged-in before we can set registerSuccess —
+    // hold navigation until the success panel is shown / user continues.
+    if (isLoggedIn && !isRecovery && !registerSuccess && !holdOnRegisterRef.current) {
       navigate(hasApartment ? '/dashboard' : '/onboarding', { replace: true });
     }
   }, [isLoggedIn, hasApartment, navigate, isRecovery, registerSuccess]);
 
   const navigateAfterAuth = async (userId) => {
+    holdOnRegisterRef.current = false;
     const hasApt = await refreshApartment(userId);
     navigate(hasApt ? '/dashboard' : '/onboarding', { replace: true });
   };
@@ -66,6 +70,8 @@ export default function LoginPage() {
       return;
     }
     setSubmitting(true);
+    // Block auto-redirect while signup creates a session
+    holdOnRegisterRef.current = true;
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
@@ -78,7 +84,7 @@ export default function LoginPage() {
       });
       if (signUpError) throw signUpError;
 
-      // Show in-page success panel instead of a browser alert
+      // Show in-page success panel instead of a browser alert / instant redirect
       if (!data.session) {
         setRegisterSuccess({
           needsEmailConfirm: true,
@@ -93,6 +99,7 @@ export default function LoginPage() {
         name: fullName.trim() || 'חבר/ה חדש/ה',
       });
     } catch (err) {
+      holdOnRegisterRef.current = false;
       setError('ההרשמה נכשלה');
     } finally {
       setSubmitting(false);
@@ -145,6 +152,7 @@ export default function LoginPage() {
     setActiveTab(tab);
     setError('');
     setRegisterSuccess(null);
+    holdOnRegisterRef.current = false;
   };
 
   return (

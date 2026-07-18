@@ -139,14 +139,42 @@
   background-color: rgba(199, 255, 46, 0.2);
 }
 
-.drag-dots {
+.drag-dots,
+.drag-handle {
   font-family: var(--font-mono);
   font-size: 18px;
   color: var(--text-muted);
-  /* Muted color */
   cursor: grab;
   user-select: none;
-  padding: 0 var(--spacing-xs);
+  touch-action: none;
+  padding: 4px var(--spacing-xs);
+  border: none;
+  background: transparent;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.todo-item-card.is-dragging,
+.done-item-card.is-dragging {
+  opacity: 0.55;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.todo-item-card.drop-target,
+.done-item-card.drop-target {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.items-list-empty {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 4px 0;
 }
 
 /* 4. Done Card: light gray cards, muted text, strikethrough */
@@ -231,6 +259,40 @@
   padding: var(--spacing-xl);
   color: var(--text-muted);
   font-family: var(--font-body);
+}
+
+.shopping-error {
+  background: rgba(255, 68, 68, 0.08);
+  border: 1px solid rgba(255, 68, 68, 0.35);
+  color: var(--error);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.shopping-warn {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  color: var(--text-primary);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.shopping-error-hint {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.shopping-error code,
+.shopping-warn code {
+  font-family: var(--font-mono);
+  font-size: 12px;
 }
 
 .shopping-empty-state {

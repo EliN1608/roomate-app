@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -13,6 +13,8 @@ export default function LoginPage() {
   const [isRecovery, setIsRecovery] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [registerSuccess, setRegisterSuccess] = useState(null);
+  const holdOnRegisterRef = useRef(false);
 
   // Form states
   const [email, setEmail] = useState('');
@@ -29,12 +31,15 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
-    if (isLoggedIn && !isRecovery) {
+    // After signup, auth becomes logged-in before we can set registerSuccess —
+    // hold navigation until the success panel is shown / user continues.
+    if (isLoggedIn && !isRecovery && !registerSuccess && !holdOnRegisterRef.current) {
       navigate(hasApartment ? '/dashboard' : '/onboarding', { replace: true });
     }
-  }, [isLoggedIn, hasApartment, navigate, isRecovery]);
+  }, [isLoggedIn, hasApartment, navigate, isRecovery, registerSuccess]);
 
   const navigateAfterAuth = async (userId) => {
+    holdOnRegisterRef.current = false;
     const hasApt = await refreshApartment(userId);
     navigate(hasApt ? '/dashboard' : '/onboarding', { replace: true });
   };
@@ -65,6 +70,8 @@ export default function LoginPage() {
       return;
     }
     setSubmitting(true);
+    // Block auto-redirect while signup creates a session
+    holdOnRegisterRef.current = true;
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
@@ -76,13 +83,34 @@ export default function LoginPage() {
         },
       });
       if (signUpError) throw signUpError;
-      if (!data.user) {
-        setError('ההרשמה הצליחה — בדקו את האימייל לאישור החשבון');
+
+      // Show in-page success panel instead of a browser alert / instant redirect
+      if (!data.session) {
+        setRegisterSuccess({
+          needsEmailConfirm: true,
+          email,
+        });
         return;
       }
-      await navigateAfterAuth(data.user.id);
+
+      setRegisterSuccess({
+        needsEmailConfirm: false,
+        userId: data.user.id,
+        name: fullName.trim() || 'חבר/ה חדש/ה',
+      });
     } catch (err) {
+      holdOnRegisterRef.current = false;
       setError('ההרשמה נכשלה');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleContinueAfterRegister = async () => {
+    if (!registerSuccess?.userId) return;
+    setSubmitting(true);
+    try {
+      await navigateAfterAuth(registerSuccess.userId);
     } finally {
       setSubmitting(false);
     }
@@ -123,6 +151,8 @@ export default function LoginPage() {
   const handleTabSwitch = (tab) => {
     setActiveTab(tab);
     setError('');
+    setRegisterSuccess(null);
+    holdOnRegisterRef.current = false;
   };
 
   return (
@@ -184,6 +214,34 @@ export default function LoginPage() {
                   {submitting ? 'מעדכן...' : 'עדכון סיסמה'}
                 </button>
               </form>
+            </div>
+          ) : registerSuccess ? (
+            <div className="login-success-panel">
+              <div className="login-success-checkmark" aria-hidden="true">✓</div>
+              <h1 className="login-success-title">ההרשמה הצליחה!</h1>
+              <p className="login-success-subtitle">
+                {registerSuccess.needsEmailConfirm
+                  ? `שלחנו קישור אישור ל-${registerSuccess.email}. אחרי האישור תוכלו להתחבר למערכת.`
+                  : `ברוכים הבאים${registerSuccess.name ? `, ${registerSuccess.name}` : ''}! החשבון נוצר בהצלחה.`}
+              </p>
+              {registerSuccess.needsEmailConfirm ? (
+                <button
+                  type="button"
+                  className="login-submit-btn"
+                  onClick={() => handleTabSwitch('login')}
+                >
+                  מעבר להתחברות
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="login-submit-btn"
+                  onClick={handleContinueAfterRegister}
+                  disabled={submitting}
+                >
+                  {submitting ? 'מעביר...' : 'המשיכו להגדרת דירה'}
+                </button>
+              )}
             </div>
           ) : (
             <>
@@ -316,7 +374,7 @@ export default function LoginPage() {
         </div>
 
         {/* 3. BOTTOM LINK */}
-        {!isRecovery && (
+        {!isRecovery && !registerSuccess && (
         <div className="login-bottom-link">
           {activeTab === 'login' ? (
             <>

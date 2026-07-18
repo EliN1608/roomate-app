@@ -169,3 +169,27 @@ export async function restoreExpenseBalance(
     1
   );
 }
+
+/**
+ * When an apartment has no expenses left, open balances should be zero.
+ * Clears leftover settle/delete drift on the balances table.
+ */
+export async function resetApartmentBalancesIfNoExpenses(
+  supabase,
+  apartmentId
+) {
+  const { count, error: countError } = await supabase
+    .from('expenses')
+    .select('id', { count: 'exact', head: true })
+    .eq('apartment_id', apartmentId);
+
+  if (countError) throw countError;
+  if ((count || 0) > 0) return;
+
+  const { error } = await supabase
+    .from('balances')
+    .update({ amount: 0, updated_at: new Date().toISOString() })
+    .eq('apartment_id', apartmentId);
+
+  if (error) throw error;
+}

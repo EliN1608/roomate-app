@@ -384,12 +384,7 @@ export default function AddExpensePage() {
               checked={isRecurring}
               onChange={(e) => setIsRecurring(e.target.checked)}
             />
-            <span className="recurring-text">
-              <span className="recurring-title">הוצאה קבועה חודשית</span>
-              <span className="recurring-hint">
-                למשל שכ״ד / ארנונה — תועתק אוטומטית בכל חודש (לאחר הרצת הפונקציה ב־Supabase)
-              </span>
-            </span>
+            <span className="recurring-title">הוצאה קבועה חודשית</span>
           </label>
         </div>
 

@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { toLocalDateString } from '../lib/dates';
 import { applyEqualSplitBalance } from '../lib/expenseBalances';
+import Toast from '../components/Toast/Toast';
 import './AddExpensePage.css';
+
+const SUCCESS_TOAST_MS = 2200;
 
 export default function AddExpensePage() {
   const navigate = useNavigate();
@@ -14,6 +17,20 @@ export default function AddExpensePage() {
   const [payer, setPayer] = useState(user?.id || '');
   const [roommates, setRoommates] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState({ open: false, message: '', type: 'success' });
+  const navigateAfterClose = useRef(false);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ open: true, message, type });
+  };
+
+  const handleToastClose = () => {
+    setToast((prev) => ({ ...prev, open: false }));
+    if (navigateAfterClose.current) {
+      navigateAfterClose.current = false;
+      navigate('/expenses');
+    }
+  };
 
   useEffect(() => {
     if (user?.id) {
@@ -75,19 +92,19 @@ export default function AddExpensePage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!description.trim() || !amount.trim()) {
-      alert('נא למלא את כל השדות');
+      showToast('נא למלא את כל השדות', 'error');
       return;
     }
 
     const parsedAmount = parseFloat(amount);
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      alert('הסכום חייב להיות מספר גדול מ-0');
+      showToast('הסכום חייב להיות מספר גדול מ-0', 'error');
       return;
     }
 
     const checkedRoommates = roommates.filter(r => r.checked);
     if (checkedRoommates.length === 0) {
-      alert('נא לבחור לפחות שותף אחד לחלוקה');
+      showToast('נא לבחור לפחות שותף אחד לחלוקה', 'error');
       return;
     }
 
@@ -117,25 +134,24 @@ export default function AddExpensePage() {
         1
       );
 
-      alert('ההוצאה נשמרה בהצלחה!');
-      navigate('/expenses');
-
+      navigateAfterClose.current = true;
+      showToast('ההוצאה נוספה בהצלחה', 'success');
+      // Keep loading true so the form can't double-submit before navigate
     } catch (err) {
-      alert('שגיאה בשמירת הוצאה: ' + err.message);
-    } finally {
+      navigateAfterClose.current = false;
+      showToast('שגיאה בשמירת הוצאה: ' + err.message, 'error');
       setLoading(false);
     }
   };
 
   return (
     <div className="add-expense-container" id="add-expense-page">
-      {/* 1. Page Header */}
       <div className="expense-header">
         <button type="button" className="back-btn" onClick={() => navigate(-1)} aria-label="חזור">
           ←
         </button>
         <h1 className="expense-title">הוספת הוצאה</h1>
-        <div style={{ width: '24px' }}></div> {/* Spacer to center title */}
+        <div style={{ width: '24px' }}></div>
       </div>
 
       <form onSubmit={handleSubmit} className="expense-form">
@@ -219,6 +235,14 @@ export default function AddExpensePage() {
           {loading ? 'שומר...' : 'שמור הוצאה'}
         </button>
       </form>
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        type={toast.type}
+        duration={toast.type === 'success' ? SUCCESS_TOAST_MS : 3500}
+        onClose={handleToastClose}
+      />
     </div>
   );
 }

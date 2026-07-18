@@ -84,3 +84,24 @@ export function IconDotsVertical(props) {
     </IconBase>
   );
 }
+
+/** ti-plus */
+export function IconPlus(props) {
+  return (
+    <IconBase {...props}>
+      <path d="M12 5l0 14" />
+      <path d="M5 12l14 0" />
+    </IconBase>
+  );
+}
+
+/** ti-receipt */
+export function IconReceipt(props) {
+  return (
+    <IconBase {...props}>
+      <path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2" />
+      <path d="M14 8h-2.5a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-2.5" />
+      <path d="M12 7v-1m0 12v-1" />
+    </IconBase>
+  );
+}

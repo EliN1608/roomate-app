@@ -1,26 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { firstDayOfLocalMonth, formatLocalDate } from '../lib/dates';
-import { EPS, buildRoommateCardsFromBalances } from '../lib/balances';
+import {
+  EPS,
+  computePairwiseNets,
+  buildRoommateCardsFromPairwise,
+  sumPairwiseBalance,
+} from '../lib/balances';
+import { EXPENSE_CATEGORIES } from '../lib/expenseSplits';
+import { IconPlus, IconReceipt } from '../components/icons/TablerIcons';
 import './DashboardPage.css';
 
 function formatBalanceHeadline(balance) {
   const abs = Math.abs(Number(balance) || 0);
-  if (abs < EPS) return { text: 'יתרה: ₪0.00', tone: 'neutral', subtitle: 'המאזן מאוזן ✓' };
-  if (balance > 0) {
-    return {
-      text: `חייבים לך ₪${abs.toFixed(2)}`,
-      tone: 'positive',
-      subtitle: 'לפי חלוקה בין השותפים',
-    };
+  if (abs < EPS) {
+    return { text: 'יתרה: ₪0.00', tone: 'neutral' };
   }
-  return {
-    text: `אתה חייב ₪${abs.toFixed(2)}`,
-    tone: 'negative',
-    subtitle: 'לפי חלוקה בין השותפים',
-  };
+  if (balance > 0) {
+    return { text: `חייבים לך ₪${abs.toFixed(2)}`, tone: 'positive' };
+  }
+  return { text: `אתה חייב ₪${abs.toFixed(2)}`, tone: 'negative' };
+}
+
+function categoryLabel(value) {
+  return EXPENSE_CATEGORIES.find((c) => c.value === value)?.label || 'אחר';
 }
 
 export default function DashboardPage() {
@@ -30,114 +35,20 @@ export default function DashboardPage() {
   const [balance, setBalance] = useState(0);
   const [roommateCards, setRoommateCards] = useState([]);
   const [shoppingCount, setShoppingCount] = useState(0);
+  const [monthExpenseCount, setMonthExpenseCount] = useState(0);
   const [totalMonth, setTotalMonth] = useState(0);
+  const [categoryBars, setCategoryBars] = useState([]);
+  const [activity, setActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
-  const [settleOpen, setSettleOpen] = useState(false);
-  const [settlePartnerId, setSettlePartnerId] = useState('');
+  const [settleCard, setSettleCard] = useState(null);
   const [settleAmount, setSettleAmount] = useState('');
   const [settleError, setSettleError] = useState('');
   const [settleSaving, setSettleSaving] = useState(false);
 
-  const applyBalanceDelta = async (userId, delta) => {
-    const { data: existing, error: selectError } = await supabase
-      .from('balances')
-      .select('id, amount')
-      .eq('apartment_id', apartmentId)
-      .eq('user_id', userId)
-      .maybeSingle();
+  const fetchDashboardData = useCallback(async () => {
+    if (!apartmentId || !user?.id) return;
 
-    if (selectError) throw selectError;
-
-    if (existing) {
-      const { error } = await supabase
-        .from('balances')
-        .update({
-          amount: Number(existing.amount) + delta,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existing.id);
-      if (error) throw error;
-    } else {
-      const { error } = await supabase
-        .from('balances')
-        .insert({
-          apartment_id: apartmentId,
-          user_id: userId,
-          amount: delta,
-        });
-      if (error) throw error;
-    }
-  };
-
-  const fetchApartmentBalances = async () => {
-    const { data: rpcData, error: rpcError } = await supabase.rpc(
-      'get_apartment_balances',
-      { apt_id: apartmentId }
-    );
-
-    if (!rpcError && rpcData) {
-      const map = {};
-      rpcData.forEach((row) => {
-        map[row.user_id] = Number(row.amount) || 0;
-      });
-      return map;
-    }
-
-    // Fallback: direct select (may only return own row under RLS)
-    const { data: rows } = await supabase
-      .from('balances')
-      .select('user_id, amount')
-      .eq('apartment_id', apartmentId);
-
-    const map = {};
-    (rows || []).forEach((row) => {
-      map[row.user_id] = Number(row.amount) || 0;
-    });
-
-    if (map[user.id] === undefined) {
-      const { data: own } = await supabase
-        .from('balances')
-        .select('amount')
-        .eq('apartment_id', apartmentId)
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (own) map[user.id] = Number(own.amount) || 0;
-    }
-
-    return map;
-  };
-
-  const fetchApartmentProfiles = async (userIds) => {
-    const { data: rpcData, error: rpcError } = await supabase.rpc(
-      'get_apartment_profiles',
-      { apt_id: apartmentId }
-    );
-
-    if (!rpcError && rpcData) {
-      const map = {};
-      rpcData.forEach((p) => {
-        map[p.user_id] = p.full_name;
-      });
-      return map;
-    }
-
-    const { data: profilesData } = await supabase
-      .from('profiles')
-      .select('user_id, full_name')
-      .in(
-        'user_id',
-        userIds.length ? userIds : ['00000000-0000-0000-0000-000000000000']
-      );
-
-    const map = {};
-    (profilesData || []).forEach((p) => {
-      map[p.user_id] = p.full_name;
-    });
-    return map;
-  };
-
-  const fetchDashboardData = async () => {
     try {
       setLoading(true);
 
@@ -145,58 +56,154 @@ export default function DashboardPage() {
         apt_id: apartmentId,
       });
       const memberRows = membersData || [];
-      const userIds = memberRows.map((m) => m.user_id);
-      const profileMap = await fetchApartmentProfiles(userIds);
+      const profileFromRpc = {};
+      memberRows.forEach((m) => {
+        if (m.full_name) profileFromRpc[String(m.user_id)] = m.full_name;
+      });
+
+      const nameOf = (uid, idx) => {
+        const id = String(uid);
+        if (id === String(user.id)) return 'אני';
+        return profileFromRpc[id] || `שותף ${idx + 1}`;
+      };
 
       const members = memberRows.map((m, idx) => ({
-        user_id: m.user_id,
-        name:
-          m.user_id === user.id
-            ? 'אני'
-            : profileMap[m.user_id] || `שותף ${idx + 1}`,
+        user_id: String(m.user_id),
+        name: nameOf(m.user_id, idx),
       }));
 
       const firstDay = firstDayOfLocalMonth();
-      const { data: expensesData } = await supabase
-        .from('expenses')
-        .select('id, description, amount, date, paid_by')
-        .eq('apartment_id', apartmentId)
-        .order('date', { ascending: false })
-        .limit(3);
-      setExpenses(expensesData || []);
 
-      const { data: monthExpenses } = await supabase
-        .from('expenses')
-        .select('amount')
-        .eq('apartment_id', apartmentId)
-        .gte('date', firstDay);
-      const total = (monthExpenses || []).reduce(
-        (sum, e) => sum + Number(e.amount),
-        0
+      const loadSettlements = async () => {
+        const { data: rpcData, error: rpcError } = await supabase.rpc(
+          'get_apartment_settlements',
+          { apt_id: apartmentId }
+        );
+        if (!rpcError && rpcData) return rpcData;
+
+        const { data: rows } = await supabase
+          .from('settlements')
+          .select('id, from_user, to_user, amount, created_at')
+          .eq('apartment_id', apartmentId)
+          .order('created_at', { ascending: true });
+        return rows || [];
+      };
+
+      const [
+        expensesRes,
+        allExpensesRes,
+        monthRes,
+        settlements,
+        shoppingRes,
+        boughtRes,
+      ] = await Promise.all([
+        supabase
+          .from('expenses')
+          .select('id, description, amount, date, paid_by, category, created_at')
+          .eq('apartment_id', apartmentId)
+          .order('date', { ascending: false })
+          .limit(5),
+        supabase
+          .from('expenses')
+          .select('id, paid_by, amount, expense_shares(user_id, amount)')
+          .eq('apartment_id', apartmentId),
+        supabase
+          .from('expenses')
+          .select('amount, category')
+          .eq('apartment_id', apartmentId)
+          .gte('date', firstDay),
+        loadSettlements(),
+        supabase
+          .from('shopping_items')
+          .select('id', { count: 'exact', head: true })
+          .eq('apartment_id', apartmentId)
+          .eq('is_done', false),
+        supabase
+          .from('shopping_items')
+          .select('id, name, added_by, completed_at, created_at, is_done')
+          .eq('apartment_id', apartmentId)
+          .eq('is_done', true)
+          .order('completed_at', { ascending: false, nullsFirst: false })
+          .limit(5),
+      ]);
+
+      const expensesData = expensesRes.data || [];
+      setExpenses(expensesData.slice(0, 3));
+
+      const monthExpenses = monthRes.data || [];
+      setTotalMonth(
+        monthExpenses.reduce((sum, e) => sum + Number(e.amount), 0)
       );
-      setTotalMonth(total);
+      setMonthExpenseCount(monthExpenses.length);
 
-      // Single source of truth: balances table (via SECURITY DEFINER RPC)
-      const balancesByUser = await fetchApartmentBalances();
-      const myBalance = Number(balancesByUser[user.id] || 0);
-      setBalance(myBalance);
+      const byCat = {};
+      monthExpenses.forEach((e) => {
+        const key = e.category || 'other';
+        byCat[key] = (byCat[key] || 0) + Number(e.amount);
+      });
+      const catEntries = Object.entries(byCat)
+        .map(([key, amount]) => ({
+          key,
+          label: categoryLabel(key),
+          amount,
+        }))
+        .sort((a, b) => b.amount - a.amount);
+      const maxCat = catEntries[0]?.amount || 1;
+      setCategoryBars(
+        catEntries.map((c) => ({
+          ...c,
+          pct: Math.max(6, Math.round((c.amount / maxCat) * 100)),
+        }))
+      );
+
+      const pairwise = computePairwiseNets(
+        user.id,
+        members,
+        allExpensesRes.data || [],
+        settlements || []
+      );
+      setBalance(sumPairwiseBalance(pairwise));
       setRoommateCards(
-        buildRoommateCardsFromBalances(user.id, balancesByUser, members)
+        buildRoommateCardsFromPairwise(user.id, members, pairwise)
       );
 
-      const { count } = await supabase
-        .from('shopping_items')
-        .select('id', { count: 'exact' })
-        .eq('apartment_id', apartmentId)
-        .eq('is_done', false);
-      setShoppingCount(count || 0);
+      setShoppingCount(shoppingRes.count || 0);
+
+      const feed = [];
+      expensesData.slice(0, 3).forEach((exp) => {
+        const actorId = String(exp.paid_by);
+        const actor =
+          actorId === String(user.id)
+            ? 'את/ה'
+            : profileFromRpc[actorId] || 'שותף';
+        feed.push({
+          id: `exp-${exp.id}`,
+          at: exp.created_at || exp.date,
+          text: `${actor} הוסיף/ה הוצאה: ${exp.description}`,
+        });
+      });
+      (boughtRes.data || []).slice(0, 3).forEach((item) => {
+        const actorId = String(item.added_by || '');
+        const actor =
+          actorId === String(user.id)
+            ? 'את/ה'
+            : profileFromRpc[actorId] || 'שותף';
+        feed.push({
+          id: `shop-${item.id}`,
+          at: item.completed_at || item.created_at,
+          text: `${actor} סימן/ה כנקנה: ${item.name}`,
+        });
+      });
+      feed.sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
+      setActivity(feed.slice(0, 2));
+
       setLastUpdated(new Date());
     } catch (err) {
       console.error('Error fetching dashboard:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [apartmentId, user?.id]);
 
   useEffect(() => {
     if (!apartmentId || !user?.id) {
@@ -204,75 +211,50 @@ export default function DashboardPage() {
       return;
     }
     fetchDashboardData();
-  }, [apartmentId, user?.id]);
+  }, [apartmentId, user?.id, fetchDashboardData]);
 
-  const openSettleModal = () => {
-    const firstOpen = roommateCards.find((c) => c.relation !== 'settled');
-    setSettlePartnerId(firstOpen?.id || roommateCards[0]?.id || '');
-    setSettleAmount(firstOpen ? firstOpen.amount.toFixed(2) : '');
-    setSettleError('');
-    setSettleOpen(true);
-  };
-
-  const selectedCard = roommateCards.find((c) => c.id === settlePartnerId);
-
-  const handleSettlePartnerChange = (id) => {
-    setSettlePartnerId(id);
-    const card = roommateCards.find((c) => c.id === id);
-    if (card && card.relation !== 'settled') {
-      setSettleAmount(card.amount.toFixed(2));
-    } else {
-      setSettleAmount('');
-    }
+  const openSettleForCard = (card) => {
+    if (!card || card.relation === 'settled') return;
+    setSettleCard(card);
+    setSettleAmount(card.amount.toFixed(2));
     setSettleError('');
   };
 
-  const handleSettleSubmit = async (e) => {
-    e.preventDefault();
+  const closeSettleModal = () => {
+    if (settleSaving) return;
+    setSettleCard(null);
+    setSettleAmount('');
+    setSettleError('');
+  };
+
+  const handleSettleConfirm = async () => {
+    if (!settleCard || settleSaving) return;
     setSettleError('');
 
-    const amount = parseFloat(settleAmount);
-    if (!settlePartnerId) {
-      setSettleError('נא לבחור שותף');
-      return;
-    }
-    if (!Number.isFinite(amount) || amount <= 0) {
+    const max = Number(settleCard.amount) || 0;
+    const amount = Number(settleAmount);
+    if (!Number.isFinite(amount) || amount <= EPS) {
       setSettleError('נא להזין סכום חיובי');
       return;
     }
-
-    const card = roommateCards.find((c) => c.id === settlePartnerId);
-    if (!card || card.relation === 'settled') {
-      setSettleError('אין חוב פתוח מול השותף שנבחר');
-      return;
-    }
-    if (amount - card.amount > EPS) {
-      setSettleError(`הסכום גדול מהחוב (₪${card.amount.toFixed(2)})`);
+    if (amount > max + EPS) {
+      setSettleError(
+        `הסכום לא יכול לעלות על ₪${max.toFixed(2)} מול ${settleCard.name}`
+      );
       return;
     }
 
     try {
       setSettleSaving(true);
-
-      // Best-effort audit row (cards use balances as source of truth)
-      const fromUser = card.relation === 'owes_me' ? settlePartnerId : user.id;
-      const toUser = card.relation === 'owes_me' ? user.id : settlePartnerId;
-      await supabase.from('settlements').insert({
-        apartment_id: apartmentId,
-        from_user: fromUser,
-        to_user: toUser,
-        amount,
+      const { error } = await supabase.rpc('settle_with_member', {
+        apt_id: apartmentId,
+        partner_id: settleCard.id,
+        settle_amount: Number(amount.toFixed(2)),
+        i_am_owed: settleCard.relation === 'owes_me',
       });
-
-      if (card.relation === 'owes_me') {
-        await applyBalanceDelta(user.id, -amount);
-        await applyBalanceDelta(settlePartnerId, amount);
-      } else {
-        await applyBalanceDelta(user.id, amount);
-        await applyBalanceDelta(settlePartnerId, -amount);
-      }
-
-      setSettleOpen(false);
+      if (error) throw error;
+      setSettleCard(null);
+      setSettleAmount('');
       await fetchDashboardData();
     } catch (err) {
       setSettleError(err.message || 'שגיאה בהסדרת התשלום');
@@ -282,133 +264,248 @@ export default function DashboardPage() {
   };
 
   if (loading) {
-    return <div className="dashboard-loading">טוען נתונים...</div>;
+    return (
+      <div className="dashboard-container" id="dashboard-page">
+        <div className="dashboard-skeleton balance-skeleton" />
+        <div className="dashboard-skeleton-row">
+          <div className="dashboard-skeleton metric-skeleton" />
+          <div className="dashboard-skeleton metric-skeleton" />
+        </div>
+        <div className="dashboard-skeleton actions-skeleton" />
+        <div className="dashboard-skeleton list-skeleton" />
+      </div>
+    );
   }
 
   const headline = formatBalanceHeadline(balance);
-  const openDebts = roommateCards.filter((c) => c.relation !== 'settled');
+  const isBalanced = Math.abs(balance) < EPS;
+  const isEmptyApartment =
+    expenses.length === 0 && shoppingCount === 0 && monthExpenseCount === 0;
 
   return (
     <div className="dashboard-container" id="dashboard-page">
-      <div className="balance-card">
-        <div className="balance-label">מאזן הדירה שלך</div>
-        <div className={`balance-title balance-title-${headline.tone}`}>
-          {headline.text}
-        </div>
-        <div className="balance-subtitle">{headline.subtitle}</div>
-        <div className="balance-update-time">
-          עודכן לאחרונה: {lastUpdated.toLocaleTimeString('he-IL')}
-        </div>
-
-        <div className="balance-people-grid">
-          {roommateCards.length === 0 ? (
-            <div className="balance-people-empty">אין שותפים נוספים בדירה עדיין</div>
-          ) : (
-            roommateCards.map((card) => (
-              <div
-                key={card.id}
-                className={`balance-person-card relation-${card.relation}`}
-              >
-                <div className="balance-person-name">{card.name}</div>
-                <div className="balance-person-amount">
-                  {card.relation === 'settled'
-                    ? '₪0.00'
-                    : `₪${card.amount.toFixed(2)}`}
-                </div>
-                <div className="balance-person-relation">
-                  {card.relation === 'owes_me' && 'חייב/ת לך'}
-                  {card.relation === 'i_owe' && `אתה חייב ל-${card.name}`}
-                  {card.relation === 'settled' && 'מאוזנים'}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-
+      {/* Combined info cards — count + amount / shopping together */}
+      <div className="metrics-row">
         <button
           type="button"
-          className="balance-btn"
-          onClick={openSettleModal}
-          disabled={openDebts.length === 0}
+          className="metric-card metric-card--nav"
+          onClick={() => navigate('/expenses')}
         >
-          הסדרת תשלום
+          <div className="metric-label">הוצאות החודש</div>
+          <div className="metric-value">{monthExpenseCount}</div>
+          <div className="metric-secondary">
+            סה״כ ₪
+            {totalMonth.toLocaleString('he-IL', { maximumFractionDigits: 0 })}
+          </div>
+        </button>
+        <button
+          type="button"
+          className="metric-card metric-card--nav"
+          onClick={() => navigate('/shopping')}
+        >
+          <div className="metric-label">פריטים לקנייה</div>
+          <div className="metric-value">{shoppingCount}</div>
+          <div className="metric-secondary">ברשימה הפתוחה</div>
         </button>
       </div>
 
-      <div className="metrics-row">
-        <div className="metric-card">
-          <div className="metric-label">סה״כ החודש</div>
-          <div className="metric-value">₪{totalMonth.toLocaleString()}</div>
-        </div>
-        <div className="metric-card">
-          <div className="metric-label">פריטים לקנייה</div>
-          <div className="metric-value">{shoppingCount}</div>
-        </div>
-      </div>
-
-      <div className="quick-actions-row">
+      {/* Action buttons — visually distinct from info cards */}
+      <div className="quick-actions-row dashboard-quick-top">
         <button
-          className="quick-action-btn"
+          type="button"
+          className="quick-action-btn quick-action-btn--accent"
           onClick={() => navigate('/expenses/add')}
         >
-          <span className="quick-action-icon">💸</span>
+          <IconPlus size={18} stroke={2.25} className="quick-action-plus" />
           <span className="quick-action-label">הוסף הוצאה</span>
         </button>
         <button
-          className="quick-action-btn"
+          type="button"
+          className="quick-action-btn quick-action-btn--accent"
           onClick={() => navigate('/shopping')}
         >
-          <span className="quick-action-icon">🛒</span>
-          <span className="quick-action-label">רשימת קניות</span>
-        </button>
-        <button
-          className="quick-action-btn"
-          onClick={() => navigate('/profile')}
-        >
-          <span className="quick-action-icon">👥</span>
-          <span className="quick-action-label">שותפים</span>
+          <IconPlus size={18} stroke={2.25} className="quick-action-plus" />
+          <span className="quick-action-label">הוסף לרשימת קניות</span>
         </button>
       </div>
 
-      <div className="expenses-section">
-        <div className="section-header">
-          <h2 className="section-title">הוצאות אחרונות</h2>
-          <Link to="/expenses" className="view-all-link">צפה בהכל</Link>
-        </div>
-
-        <div className="expenses-list">
-          {expenses.length === 0 ? (
-            <div className="dashboard-empty">אין הוצאות עדיין</div>
-          ) : (
-            expenses.map((exp) => (
-              <div key={exp.id} className="expense-row-card">
-                <div className="expense-icon-square">💰</div>
-                <div className="expense-info">
-                  <div className="expense-name">{exp.description}</div>
-                  <div className="expense-date">{formatLocalDate(exp.date)}</div>
-                </div>
-                <div className="expense-right">
-                  <div className="expense-amount">₪{Number(exp.amount).toFixed(2)}</div>
-                  <div
-                    className={`expense-paid-by ${
-                      exp.paid_by === user?.id ? 'paid-by-me' : 'paid-by-other'
-                    }`}
-                  >
-                    {exp.paid_by === user?.id ? 'שילמתי אני' : 'שילם שותף'}
-                  </div>
-                </div>
+      {isEmptyApartment ? (
+        <section className="dashboard-empty-state">
+          <h2 className="dashboard-empty-title">הדירה עדיין ריקה</h2>
+          <p className="dashboard-empty-text">
+            הוסיפו הוצאה ראשונה או פריט לקניות — והמאזן יתחיל להתעדכן אוטומטית.
+          </p>
+          <div className="dashboard-empty-actions">
+            <button
+              type="button"
+              className="balance-btn"
+              onClick={() => navigate('/expenses/add')}
+            >
+              <IconPlus size={16} stroke={2.25} />
+              הוסף הוצאה
+            </button>
+            <button
+              type="button"
+              className="dashboard-empty-secondary"
+              onClick={() => navigate('/shopping')}
+            >
+              לרשימת הקניות
+            </button>
+          </div>
+        </section>
+      ) : (
+        <>
+          <div className="balance-card">
+            <div className="balance-card-header">
+              <div className="balance-label">מאזן הדירה שלך</div>
+              <div className="balance-update-time">
+                עודכן {lastUpdated.toLocaleTimeString('he-IL')}
               </div>
-            ))
+            </div>
+            <div className={`balance-title balance-title-${headline.tone}`}>
+              {headline.text}
+            </div>
+
+            <div className="balance-people-grid">
+              {roommateCards.length === 0 ? (
+                <div className="balance-people-empty">
+                  אין שותפים נוספים בדירה עדיין
+                </div>
+              ) : (
+                roommateCards.map((card) => (
+                  <button
+                    key={card.id}
+                    type="button"
+                    className={`balance-person-card relation-${card.relation}${
+                      card.relation !== 'settled' ? ' is-actionable' : ''
+                    }`}
+                    onClick={() => openSettleForCard(card)}
+                    disabled={card.relation === 'settled'}
+                  >
+                    <div className="balance-person-name">{card.name}</div>
+                    <div className="balance-person-amount">
+                      {card.relation === 'settled'
+                        ? '₪0.00'
+                        : `₪${card.amount.toFixed(2)}`}
+                    </div>
+                    <div className="balance-person-relation">
+                      {card.relation === 'owes_me' && 'חייב/ת לך · לחצו להסדרה'}
+                      {card.relation === 'i_owe' &&
+                        `אתה חייב ל-${card.name} · לחצו להסדרה`}
+                      {card.relation === 'settled' && 'מאוזנים'}
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+
+          {activity.length > 0 && (
+            <section className="activity-section">
+              <h2 className="section-title">פעילות אחרונה</h2>
+              <ul className="activity-list">
+                {activity.map((item) => (
+                  <li key={item.id} className="activity-row">
+                    {item.text}
+                  </li>
+                ))}
+              </ul>
+            </section>
           )}
-        </div>
-      </div>
 
-      <Link to="/expenses/add" className="cta-button-link">
-        + הוסף הוצאה חדשה
-      </Link>
+          {categoryBars.length > 0 && (
+            <section className="chart-section">
+              <h2 className="section-title">הוצאות לפי קטגוריה (החודש)</h2>
+              <div className="category-bars">
+                {categoryBars.map((bar) => (
+                  <div key={bar.key} className="category-bar-row">
+                    <div className="category-bar-meta">
+                      <span>{bar.label}</span>
+                      <span>₪{bar.amount.toFixed(0)}</span>
+                    </div>
+                    <div className="category-bar-track">
+                      <div
+                        className="category-bar-fill"
+                        style={{ width: `${bar.pct}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
-      {settleOpen && (
-        <div className="settle-modal-overlay" onClick={() => setSettleOpen(false)}>
+          <div className="expenses-section">
+            <div className="section-header">
+              <h2 className="section-title">הוצאות אחרונות</h2>
+              <Link to="/expenses" className="view-all-link">
+                צפה בהכל
+              </Link>
+            </div>
+
+            <div className="expenses-list">
+              {expenses.length === 0 ? (
+                <div className="expenses-empty-state">
+                  <div className="expenses-empty-icon" aria-hidden="true">
+                    <IconReceipt size={28} stroke={1.75} />
+                  </div>
+                  <p className="expenses-empty-text">
+                    עדיין לא נוספו הוצאות — הוסף את הראשונה
+                  </p>
+                  <button
+                    type="button"
+                    className="expenses-empty-cta"
+                    onClick={() => navigate('/expenses/add')}
+                  >
+                    <IconPlus size={16} stroke={2.25} />
+                    הוסף הוצאה
+                  </button>
+                </div>
+              ) : (
+                expenses.map((exp) => (
+                  <div key={exp.id} className="expense-row-card">
+                    <div className="expense-icon-square">₪</div>
+                    <div className="expense-info">
+                      <div className="expense-name">{exp.description}</div>
+                      <div className="expense-date">
+                        {formatLocalDate(exp.date)}
+                      </div>
+                    </div>
+                    <div className="expense-right">
+                      <div className="expense-amount">
+                        ₪{Number(exp.amount).toFixed(2)}
+                      </div>
+                      <div
+                        className={`expense-paid-by ${
+                          exp.paid_by === user?.id
+                            ? 'paid-by-me'
+                            : 'paid-by-other'
+                        }`}
+                      >
+                        {exp.paid_by === user?.id ? 'שילמתי אני' : 'שילם שותף'}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {!isBalanced && (
+            <Link to="/expenses/add" className="cta-button-link">
+              <IconPlus size={18} stroke={2.25} />
+              הוסף הוצאה חדשה
+            </Link>
+          )}
+        </>
+      )}
+
+      {settleCard && (
+        <div
+          className="settle-modal-overlay"
+          onClick={closeSettleModal}
+          role="presentation"
+        >
           <div
             className="settle-modal-card"
             onClick={(e) => e.stopPropagation()}
@@ -417,75 +514,56 @@ export default function DashboardPage() {
             aria-labelledby="settle-modal-title"
           >
             <h2 id="settle-modal-title" className="settle-modal-title">
-              הסדרת תשלום
+              הסדרת תשלום עם {settleCard.name}
             </h2>
             <p className="settle-modal-subtitle">
-              בחרו עם מי מסדירים וכמה הוחזר — היתרה תתקזז בהתאם.
+              {settleCard.relation === 'owes_me'
+                ? `פתוח מול ${settleCard.name}: חייב/ת לך ₪${settleCard.amount.toFixed(2)}. אפשר להסדיר חלק או את כל הסכום.`
+                : `פתוח מול ${settleCard.name}: אתה חייב ₪${settleCard.amount.toFixed(2)}. אפשר להסדיר חלק או את כל הסכום.`}
             </p>
 
-            <form onSubmit={handleSettleSubmit} className="settle-modal-form">
-              <label className="settle-field-label" htmlFor="settle-partner">
-                עם מי מסדירים?
-              </label>
-              <select
-                id="settle-partner"
-                className="settle-field-input"
-                value={settlePartnerId}
-                onChange={(e) => handleSettlePartnerChange(e.target.value)}
-              >
-                {roommateCards.map((card) => (
-                  <option key={card.id} value={card.id}>
-                    {card.name}
-                    {card.relation === 'owes_me'
-                      ? ` — חייב/ת לך ₪${card.amount.toFixed(2)}`
-                      : card.relation === 'i_owe'
-                        ? ` — אתה חייב ₪${card.amount.toFixed(2)}`
-                        : ' — מאוזנים'}
-                  </option>
-                ))}
-              </select>
-
-              {selectedCard && selectedCard.relation !== 'settled' && (
-                <div className="settle-hint">
-                  {selectedCard.relation === 'owes_me'
-                    ? `${selectedCard.name} מחזיר/ה לך`
-                    : `אתה מחזיר ל-${selectedCard.name}`}
-                </div>
-              )}
-
+            <div className="settle-modal-form">
               <label className="settle-field-label" htmlFor="settle-amount">
-                סכום שהוחזר (₪)
+                סכום להסדרה (₪)
               </label>
               <input
                 id="settle-amount"
+                className="settle-field-input"
                 type="number"
+                inputMode="decimal"
                 min="0.01"
                 step="0.01"
-                className="settle-field-input"
+                max={settleCard.amount}
                 value={settleAmount}
                 onChange={(e) => setSettleAmount(e.target.value)}
-                placeholder="0.00"
+                disabled={settleSaving}
               />
-
-              {settleError && <div className="settle-error">{settleError}</div>}
-
-              <div className="settle-modal-actions">
-                <button
-                  type="submit"
-                  className="settle-save-btn"
-                  disabled={settleSaving || openDebts.length === 0}
-                >
-                  {settleSaving ? 'מעדכן...' : 'אישור קיזוז'}
-                </button>
-                <button
-                  type="button"
-                  className="settle-cancel-btn"
-                  onClick={() => setSettleOpen(false)}
-                >
-                  ביטול
-                </button>
+              <div className="settle-hint">
+                מקסימום מול שותף זה: ₪{settleCard.amount.toFixed(2)} — שותפים
+                אחרים לא יושפעו
               </div>
-            </form>
+            </div>
+
+            {settleError && <div className="settle-error">{settleError}</div>}
+
+            <div className="settle-modal-actions">
+              <button
+                type="button"
+                className="settle-save-btn"
+                onClick={handleSettleConfirm}
+                disabled={settleSaving}
+              >
+                {settleSaving ? 'מעדכן...' : 'הסדר תשלום'}
+              </button>
+              <button
+                type="button"
+                className="settle-cancel-btn"
+                onClick={closeSettleModal}
+                disabled={settleSaving}
+              >
+                ביטול
+              </button>
+            </div>
           </div>
         </div>
       )}

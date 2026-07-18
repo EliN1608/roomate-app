@@ -8,6 +8,7 @@ import {
   applyEqualSplitBalance,
   reverseExpenseBalance,
   restoreExpenseBalance,
+  resetApartmentBalancesIfNoExpenses,
 } from '../lib/expenseBalances';
 import './ExpensesHistoryPage.css';
 
@@ -339,6 +340,8 @@ export default function ExpensesHistoryPage() {
         );
         throw error;
       }
+
+      await resetApartmentBalancesIfNoExpenses(supabase, apartmentId);
 
       setDeleteTarget(null);
       await refreshAfterMutation();

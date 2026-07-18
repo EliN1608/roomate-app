@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase';
 import Badge from '../components/Badge/Badge';
 import Toast from '../components/Toast/Toast';
 import { IconDotsVertical, IconEdit } from '../components/icons/TablerIcons';
+import { fetchMyOpenBalance } from '../lib/openBalance';
+import { EPS } from '../lib/balances';
 import './ProfilePage.css';
 
 const SUCCESS_TOAST_MS = 2200;
@@ -101,13 +103,13 @@ export default function ProfilePage() {
       setBalance(0);
       return;
     }
-    const { data: balanceData } = await supabase
-      .from('balances')
-      .select('amount')
-      .eq('apartment_id', apartmentId)
-      .eq('user_id', user.id)
-      .maybeSingle();
-    setBalance(balanceData?.amount || 0);
+    try {
+      const open = await fetchMyOpenBalance(supabase, apartmentId, user.id);
+      setBalance(open);
+    } catch (err) {
+      console.error('Error fetching open balance:', err);
+      setBalance(0);
+    }
   }, [apartmentId, user?.id]);
 
   useEffect(() => {
@@ -482,16 +484,16 @@ export default function ProfilePage() {
   };
 
   const balanceColor =
-    balance > 0
+    balance > EPS
       ? 'var(--success)'
-      : balance < 0
+      : balance < -EPS
         ? 'var(--error)'
-        : 'var(--bg-surface)';
+        : 'var(--text-primary)';
 
   const balanceSubtitle =
-    balance > 0
+    balance > EPS
       ? 'השותפים חייבים לך'
-      : balance < 0
+      : balance < -EPS
         ? 'אתה חייב לשותפים'
         : 'המאזן מאוזן';
 
@@ -589,7 +591,9 @@ export default function ProfilePage() {
             </button>
           </div>
           <p className="balance-summary-amount" style={{ color: balanceColor }}>
-            {balance >= 0 ? '+' : ''}₪{Math.abs(Number(balance)).toFixed(2)}
+            {Math.abs(Number(balance)) < EPS
+              ? '₪0.00'
+              : `${balance > 0 ? '+' : '-'}₪${Math.abs(Number(balance)).toFixed(2)}`}
           </p>
           <p className="balance-summary-subtitle">{balanceSubtitle}</p>
         </section>

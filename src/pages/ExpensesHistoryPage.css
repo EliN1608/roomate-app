@@ -20,6 +20,122 @@
   margin: 0 0 var(--spacing-lg) 0;
 }
 
+.month-filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: var(--spacing-md);
+}
+
+.month-filter-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.month-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.month-dropdown-trigger {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 12px 14px;
+  border-radius: var(--radius-btn);
+  border: 1.5px solid var(--bg-surface);
+  background: linear-gradient(180deg, #ffffff 0%, #f6f7f4 100%);
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.month-dropdown-trigger:hover {
+  border-color: #222;
+}
+
+.month-dropdown-trigger.open {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft), 0 8px 18px rgba(0, 0, 0, 0.06);
+}
+
+.month-dropdown-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.month-dropdown-chevron {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--bg-surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.month-dropdown-trigger.open .month-dropdown-chevron {
+  transform: rotate(180deg);
+}
+
+.month-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  left: 0;
+  z-index: 40;
+  margin: 0;
+  padding: 8px;
+  list-style: none;
+  background: #fff;
+  border: 1.5px solid var(--bg-surface);
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.14);
+  max-height: 280px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.month-dropdown-option {
+  width: 100%;
+  display: block;
+  text-align: right;
+  border: none;
+  background: transparent;
+  border-radius: 12px;
+  padding: 11px 12px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.month-dropdown-option:hover {
+  background: var(--accent-soft);
+}
+
+.month-dropdown-option.selected {
+  background: var(--accent);
+  color: var(--bg-surface);
+}
+
 /* Filter Bar */
 .filter-bar {
   display: flex;
@@ -211,4 +327,150 @@
   padding: var(--spacing-xl);
   color: var(--text-muted);
   font-family: var(--font-body);
+}
+
+.expense-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.expense-action-btn {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #f7f7f7;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.expense-action-btn.edit:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.expense-action-btn.delete {
+  color: var(--error);
+}
+
+.expense-action-btn.delete:hover {
+  border-color: var(--error);
+  background: rgba(255, 68, 68, 0.08);
+}
+
+/* Modals */
+.expense-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1300;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.expense-modal-card {
+  width: min(420px, 100%);
+  background: #fff;
+  color: var(--text-primary);
+  border-radius: 20px;
+  padding: 22px;
+  box-sizing: border-box;
+  direction: rtl;
+}
+
+.expense-modal-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.expense-modal-subtitle {
+  font-size: 14px;
+  color: var(--text-primary);
+  margin: 0 0 6px;
+  line-height: 1.45;
+}
+
+.expense-modal-detail {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0 0 16px;
+}
+
+.expense-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.expense-field-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.expense-field-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid #ddd;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.expense-modal-error {
+  background: rgba(255, 68, 68, 0.08);
+  border: 1px solid rgba(255, 68, 68, 0.35);
+  color: var(--error);
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 13px;
+}
+
+.expense-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.expense-modal-save,
+.expense-modal-cancel,
+.expense-modal-delete {
+  flex: 1;
+  border: none;
+  border-radius: 12px;
+  padding: 12px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.expense-modal-save {
+  background: var(--accent);
+  color: var(--text-primary);
+}
+
+.expense-modal-save:disabled,
+.expense-modal-delete:disabled,
+.expense-modal-cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.expense-modal-cancel {
+  background: #f2f2f2;
+  color: var(--text-primary);
+}
+
+.expense-modal-delete {
+  background: var(--error);
+  color: #fff;
 }

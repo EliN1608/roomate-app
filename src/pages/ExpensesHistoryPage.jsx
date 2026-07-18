@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { IconEdit, IconTrash } from '../components/icons/TablerIcons';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { formatLocalDate, currentMonthKey, monthDateRange, formatMonthLabel } from '../lib/dates';
@@ -482,9 +483,10 @@ export default function ExpensesHistoryPage() {
                     type="button"
                     className="expense-action-btn edit"
                     onClick={() => openEdit(exp)}
-                    aria-label="ערוך הוצאה"
+                    aria-label="ערוך"
+                    title="ערוך"
                   >
-                    עריכה
+                    <IconEdit size={16} stroke={1.75} aria-hidden="true" />
                   </button>
                   <button
                     type="button"
@@ -493,9 +495,10 @@ export default function ExpensesHistoryPage() {
                       setDeleteError('');
                       setDeleteTarget(exp);
                     }}
-                    aria-label="מחק הוצאה"
+                    aria-label="מחק"
+                    title="מחק"
                   >
-                    מחיקה
+                    <IconTrash size={16} stroke={1.75} aria-hidden="true" />
                   </button>
                 </div>
               </div>

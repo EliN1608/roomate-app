@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { flushSync } from 'react-dom';
 import { supabase } from '../lib/supabase';
 
 export const AuthContext = createContext();
@@ -26,20 +25,6 @@ export function AuthProvider({ children }) {
     setUserRole('');
   };
 
-  const applyApartmentState = ({ apartmentId: id, role, apartment }) => {
-    setApartmentId(id);
-    setHasApartment(true);
-    setUserRole(role || 'member');
-    if (apartment) {
-      setApartmentName(apartment.name || '');
-      setApartmentInviteCode(apartment.invite_code || '');
-      setApartmentCity(apartment.city || '');
-      setApartmentAddress(
-        `${apartment.street || ''} ${apartment.building_number || ''}, דירה ${apartment.apartment_number || ''}`
-      );
-    }
-  };
-
   const checkApartment = async (userId) => {
     try {
       const { data: memberData, error: memberError } = await supabase
@@ -51,17 +36,24 @@ export function AuthProvider({ children }) {
       if (memberError) throw memberError;
       
       if (memberData) {
+        setApartmentId(memberData.apartment_id);
+        setHasApartment(true);
+        setUserRole(memberData.role || 'member');
+
         const { data: apartmentData } = await supabase
           .from('apartments')
           .select('name, street, building_number, apartment_number, invite_code, city')
           .eq('id', memberData.apartment_id)
           .maybeSingle();
-
-        applyApartmentState({
-          apartmentId: memberData.apartment_id,
-          role: memberData.role || 'member',
-          apartment: apartmentData || undefined,
-        });
+        
+        if (apartmentData) {
+          setApartmentName(apartmentData.name);
+          setApartmentInviteCode(apartmentData.invite_code);
+          setApartmentCity(apartmentData.city || '');
+          setApartmentAddress(
+            `${apartmentData.street || ''} ${apartmentData.building_number || ''}, דירה ${apartmentData.apartment_number || ''}`
+          );
+        }
         return true;
       }
 
@@ -118,16 +110,6 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut();
   };
 
-  /**
-   * Sync-activate apartment membership so ProtectedRoute sees hasApartment
-   * before an immediate navigate('/dashboard').
-   */
-  const activateApartment = ({ apartmentId: id, role = 'member', apartment }) => {
-    flushSync(() => {
-      applyApartmentState({ apartmentId: id, role, apartment });
-    });
-  };
-
   return (
     <AuthContext.Provider value={{ 
       user, isLoggedIn, loading,
@@ -139,8 +121,7 @@ export function AuthProvider({ children }) {
         const id = userId || user?.id;
         if (!id) return false;
         return checkApartment(id);
-      },
-      activateApartment,
+      }
     }}>
       {!loading && children}
     </AuthContext.Provider>

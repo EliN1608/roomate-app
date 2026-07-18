@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { toLocalDateString } from '../lib/dates';
+import { applyEqualSplitBalance } from '../lib/expenseBalances';
 import './AddExpensePage.css';
 
 export default function AddExpensePage() {
@@ -71,37 +72,6 @@ export default function AddExpensePage() {
     })));
   };
 
-  const applyBalanceDelta = async (userId, delta) => {
-    const { data: existingBalance, error: selectError } = await supabase
-      .from('balances')
-      .select('id, amount')
-      .eq('apartment_id', apartmentId)
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (selectError) throw selectError;
-
-    if (existingBalance) {
-      const { error } = await supabase
-        .from('balances')
-        .update({
-          amount: existingBalance.amount + delta,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existingBalance.id);
-      if (error) throw error;
-    } else {
-      const { error } = await supabase
-        .from('balances')
-        .insert({
-          apartment_id: apartmentId,
-          user_id: userId,
-          amount: delta
-        });
-      if (error) throw error;
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!description.trim() || !amount.trim()) {
@@ -138,16 +108,14 @@ export default function AddExpensePage() {
       if (expenseError) throw expenseError;
 
       // 2. Update balances: debtors -, payer + (dashboard: + means owed to you)
-      const shareAmount = parsedAmount / checkedRoommates.length;
-      const nonPayers = checkedRoommates.filter(r => r.id !== payer);
-
-      for (const roommate of nonPayers) {
-        await applyBalanceDelta(roommate.id, -shareAmount);
-      }
-
-      if (nonPayers.length > 0) {
-        await applyBalanceDelta(payer, shareAmount * nonPayers.length);
-      }
+      await applyEqualSplitBalance(
+        supabase,
+        apartmentId,
+        checkedRoommates.map((r) => r.id),
+        payer,
+        parsedAmount,
+        1
+      );
 
       alert('ההוצאה נשמרה בהצלחה!');
       navigate('/expenses');

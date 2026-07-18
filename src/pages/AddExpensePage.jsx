@@ -1,9 +1,15 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { toLocalDateString } from '../lib/dates';
-import { applyEqualSplitBalance } from '../lib/expenseBalances';
+import { applySharesBalance } from '../lib/expenseBalances';
+import {
+  EXPENSE_CATEGORIES,
+  SPLIT_METHODS,
+  computeShares,
+  previewShares,
+} from '../lib/expenseSplits';
 import Toast from '../components/Toast/Toast';
 import './AddExpensePage.css';
 
@@ -14,6 +20,10 @@ export default function AddExpensePage() {
   const { user, apartmentId } = useAuth();
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
+  const [expenseDate, setExpenseDate] = useState(() => toLocalDateString());
+  const [category, setCategory] = useState('other');
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [splitMethod, setSplitMethod] = useState('equal');
   const [payer, setPayer] = useState(user?.id || '');
   const [roommates, setRoommates] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -42,57 +52,149 @@ export default function AddExpensePage() {
     if (!apartmentId) return;
     const fetchMembers = async () => {
       try {
-        // 1. Use RPC to get all apartment members
-        const { data: membersData } = await supabase
-          .rpc('get_apartment_members', { apt_id: apartmentId });
+        const { data: membersData } = await supabase.rpc('get_apartment_members', {
+          apt_id: apartmentId,
+        });
 
         if (!membersData) return;
 
-        // 2. Fetch profiles for those user_ids
-        const userIds = membersData.map(m => m.user_id);
+        const userIds = membersData.map((m) => m.user_id);
         const { data: profilesData } = await supabase
           .from('profiles')
           .select('user_id, full_name')
           .in('user_id', userIds);
 
-        // 3. Merge profiles
         const profileMap = {};
-        (profilesData || []).forEach(p => {
+        (profilesData || []).forEach((p) => {
           profileMap[p.user_id] = p.full_name;
         });
 
-        // 4. Set roommates with real names
-        const checkedCount = membersData.length;
-        setRoommates(membersData.map(m => ({
-          id: m.user_id,
-          name: m.user_id === user?.id ?
-            'אני' :
-            (profileMap[m.user_id] || 'שותף'),
-          checked: true,
-          share: `${(100 / checkedCount).toFixed(1)}%`
-        })));
+        const n = membersData.length || 1;
+        const equalPct = (100 / n).toFixed(1);
+        const equalFixed = '';
+
+        setRoommates(
+          membersData.map((m) => ({
+            id: m.user_id,
+            name:
+              m.user_id === user?.id
+                ? 'אני'
+                : profileMap[m.user_id] || 'שותף',
+            checked: true,
+            percent: equalPct,
+            fixed: equalFixed,
+          }))
+        );
       } catch (err) {
         console.error('Error fetching members:', err);
       }
     };
     fetchMembers();
-  }, [apartmentId]);
+  }, [apartmentId, user?.id]);
+
+  const checkedRoommates = useMemo(
+    () => roommates.filter((r) => r.checked),
+    [roommates]
+  );
+
+  const previewMap = useMemo(() => {
+    const rows = previewShares({
+      mode: splitMethod,
+      total: amount,
+      participants: checkedRoommates,
+    });
+    const map = {};
+    rows.forEach((r) => {
+      map[r.userId] = r.amount;
+    });
+    return map;
+  }, [splitMethod, amount, checkedRoommates]);
+
+  const redistributeEqualInputs = (list) => {
+    const checked = list.filter((r) => r.checked);
+    const n = checked.length || 1;
+    const equalPct = (100 / n).toFixed(1);
+    const total = Number(amount);
+    const equalFixed =
+      Number.isFinite(total) && total > 0 && checked.length
+        ? (total / checked.length).toFixed(2)
+        : '';
+
+    return list.map((rm) => {
+      if (!rm.checked) {
+        return { ...rm, percent: '0', fixed: '0' };
+      }
+      return {
+        ...rm,
+        percent: equalPct,
+        fixed: equalFixed,
+      };
+    });
+  };
 
   const toggleRoommate = (id) => {
-    const updated = roommates.map(rm =>
-      rm.id === id ? { ...rm, checked: !rm.checked } : rm
-    );
-    const checkedCount = updated.filter(r => r.checked).length;
-    setRoommates(updated.map(rm => ({
-      ...rm,
-      share: rm.checked && checkedCount ? `${(100 / checkedCount).toFixed(1)}%` : '0%'
-    })));
+    setRoommates((prev) => {
+      const updated = prev.map((rm) =>
+        rm.id === id ? { ...rm, checked: !rm.checked } : rm
+      );
+      if (splitMethod === 'equal') {
+        return redistributeEqualInputs(updated);
+      }
+      return updated;
+    });
   };
+
+  const updateRoommateField = (id, field, value) => {
+    setRoommates((prev) =>
+      prev.map((rm) => (rm.id === id ? { ...rm, [field]: value } : rm))
+    );
+  };
+
+  const handleSplitMethodChange = (mode) => {
+    setSplitMethod(mode);
+    if (mode === 'equal') {
+      setRoommates((prev) => redistributeEqualInputs(prev));
+    } else if (mode === 'percent') {
+      setRoommates((prev) => {
+        const checked = prev.filter((r) => r.checked);
+        const n = checked.length || 1;
+        const equalPct = (100 / n).toFixed(1);
+        return prev.map((rm) => ({
+          ...rm,
+          percent: rm.checked ? equalPct : '0',
+        }));
+      });
+    } else if (mode === 'fixed') {
+      setRoommates((prev) => {
+        const checked = prev.filter((r) => r.checked);
+        const total = Number(amount);
+        const equalFixed =
+          Number.isFinite(total) && total > 0 && checked.length
+            ? (total / checked.length).toFixed(2)
+            : '';
+        return prev.map((rm) => ({
+          ...rm,
+          fixed: rm.checked ? equalFixed : '0',
+        }));
+      });
+    }
+  };
+
+  // Keep equal fixed/percent hints in sync when amount changes
+  useEffect(() => {
+    if (splitMethod !== 'equal') return;
+    setRoommates((prev) => redistributeEqualInputs(prev));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [amount]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!description.trim() || !amount.trim()) {
-      showToast('נא למלא את כל השדות', 'error');
+    if (!description.trim()) {
+      showToast('נא להזין תיאור הוצאה', 'error');
+      return;
+    }
+    if (!amount.trim()) {
+      showToast('נא להזין סכום', 'error');
       return;
     }
 
@@ -102,41 +204,62 @@ export default function AddExpensePage() {
       return;
     }
 
-    const checkedRoommates = roommates.filter(r => r.checked);
-    if (checkedRoommates.length === 0) {
-      showToast('נא לבחור לפחות שותף אחד לחלוקה', 'error');
+    if (!expenseDate) {
+      showToast('נא לבחור תאריך', 'error');
+      return;
+    }
+
+    if (!payer) {
+      showToast('נא לבחור מי שילם', 'error');
+      return;
+    }
+
+    const { shares, error: splitError } = computeShares({
+      mode: splitMethod,
+      total: parsedAmount,
+      participants: checkedRoommates,
+    });
+    if (splitError) {
+      showToast(splitError, 'error');
       return;
     }
 
     try {
       setLoading(true);
 
-      // 1. Save expense to Supabase
-      const { error: expenseError } = await supabase
+      const { data: expenseRow, error: expenseError } = await supabase
         .from('expenses')
         .insert({
           apartment_id: apartmentId,
           paid_by: payer,
-          description: description,
+          description: description.trim(),
           amount: parsedAmount,
-          date: toLocalDateString()
-        });
+          date: expenseDate,
+          category,
+          is_recurring: isRecurring,
+          split_method: splitMethod,
+        })
+        .select('id')
+        .maybeSingle();
 
       if (expenseError) throw expenseError;
+      if (!expenseRow?.id) throw new Error('לא התקבל מזהה הוצאה');
 
-      // 2. Update balances: debtors -, payer + (dashboard: + means owed to you)
-      await applyEqualSplitBalance(
-        supabase,
-        apartmentId,
-        checkedRoommates.map((r) => r.id),
-        payer,
-        parsedAmount,
-        1
-      );
+      const shareRows = shares.map((s) => ({
+        expense_id: expenseRow.id,
+        user_id: s.userId,
+        amount: s.amount,
+      }));
+
+      const { error: sharesError } = await supabase
+        .from('expense_shares')
+        .insert(shareRows);
+      if (sharesError) throw sharesError;
+
+      await applySharesBalance(supabase, apartmentId, shares, payer, 1);
 
       navigateAfterClose.current = true;
       showToast('ההוצאה נוספה בהצלחה', 'success');
-      // Keep loading true so the form can't double-submit before navigate
     } catch (err) {
       navigateAfterClose.current = false;
       showToast('שגיאה בשמירת הוצאה: ' + err.message, 'error');
@@ -144,21 +267,34 @@ export default function AddExpensePage() {
     }
   };
 
+  const splitHint =
+    splitMethod === 'equal'
+      ? 'חלוקה שווה בין המשתתפים שנבחרו'
+      : splitMethod === 'percent'
+        ? 'הזינו אחוזים שסכומם 100%'
+        : 'הזינו סכום לכל משתתף — חייב להסתכם לסכום ההוצאה';
+
   return (
     <div className="add-expense-container" id="add-expense-page">
       <div className="expense-header">
-        <button type="button" className="back-btn" onClick={() => navigate(-1)} aria-label="חזור">
+        <button
+          type="button"
+          className="back-btn"
+          onClick={() => navigate(-1)}
+          aria-label="חזור"
+        >
           ←
         </button>
         <h1 className="expense-title">הוספת הוצאה</h1>
-        <div style={{ width: '24px' }}></div>
+        <div style={{ width: '24px' }} />
       </div>
 
       <form onSubmit={handleSubmit} className="expense-form">
-        {/* 2. White Card with Form Fields */}
         <div className="form-card">
           <div className="form-group">
-            <label className="form-label" htmlFor="expense-desc">תיאור הוצאה</label>
+            <label className="form-label" htmlFor="expense-desc">
+              תיאור הוצאה
+            </label>
             <input
               id="expense-desc"
               type="text"
@@ -171,10 +307,13 @@ export default function AddExpensePage() {
 
           <div className="form-row">
             <div className="form-group half-width">
-              <label className="form-label" htmlFor="expense-amount">סכום</label>
+              <label className="form-label" htmlFor="expense-amount">
+                סכום
+              </label>
               <input
                 id="expense-amount"
                 type="number"
+                min="0.01"
                 step="0.01"
                 className="form-input"
                 placeholder="0.00"
@@ -184,7 +323,24 @@ export default function AddExpensePage() {
             </div>
 
             <div className="form-group half-width">
-              <label className="form-label" htmlFor="expense-payer">מי שילם?</label>
+              <label className="form-label" htmlFor="expense-date">
+                תאריך
+              </label>
+              <input
+                id="expense-date"
+                type="date"
+                className="form-input"
+                value={expenseDate}
+                onChange={(e) => setExpenseDate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group half-width">
+              <label className="form-label" htmlFor="expense-payer">
+                מי שילם?
+              </label>
               <select
                 id="expense-payer"
                 className="form-select"
@@ -193,44 +349,153 @@ export default function AddExpensePage() {
               >
                 <option value={user?.id}>אני</option>
                 {roommates
-                  .filter(r => r.id !== user?.id)
-                  .map(r => (
+                  .filter((r) => r.id !== user?.id)
+                  .map((r) => (
                     <option key={r.id} value={r.id}>
                       {r.name}
                     </option>
                   ))}
               </select>
             </div>
+
+            <div className="form-group half-width">
+              <label className="form-label" htmlFor="expense-category">
+                קטגוריה
+              </label>
+              <select
+                id="expense-category"
+                className="form-select"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                {EXPENSE_CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
+
+          <label className="recurring-row" htmlFor="expense-recurring">
+            <input
+              id="expense-recurring"
+              type="checkbox"
+              checked={isRecurring}
+              onChange={(e) => setIsRecurring(e.target.checked)}
+            />
+            <span className="recurring-text">
+              <span className="recurring-title">הוצאה קבועה חודשית</span>
+              <span className="recurring-hint">
+                למשל שכ״ד / ארנונה — תועתק אוטומטית בכל חודש (לאחר הרצת הפונקציה ב־Supabase)
+              </span>
+            </span>
+          </label>
         </div>
 
-        {/* 3. Black Card "חלוקה עם" */}
         <div className="split-card">
-          <h2 className="split-title">חלוקה עם:</h2>
+          <h2 className="split-title">אופן חלוקה</h2>
+          <div className="split-method-bar" role="tablist" aria-label="אופן חלוקה">
+            {SPLIT_METHODS.map((m) => (
+              <button
+                key={m.value}
+                type="button"
+                role="tab"
+                aria-selected={splitMethod === m.value}
+                className={`split-method-btn ${
+                  splitMethod === m.value ? 'active' : ''
+                }`}
+                onClick={() => handleSplitMethodChange(m.value)}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
 
+          <h2 className="split-title">משתתפים</h2>
           <div className="split-list">
             {roommates.map((rm) => (
-              <div key={rm.id} className="split-row" onClick={() => toggleRoommate(rm.id)}>
-                {/* Right side: name */}
-                <span className="split-name">{rm.name}</span>
-
-                {/* Left side: checkbox + percentage */}
-                <div className="split-controls">
-                  <span className="split-percentage">{rm.share}</span>
-                  <div className={`split-checkbox ${rm.checked ? 'checked' : ''}`}>
-                    {rm.checked && '✓'}
+              <div key={rm.id} className="split-row-block">
+                <div
+                  className="split-row"
+                  onClick={() => toggleRoommate(rm.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      toggleRoommate(rm.id);
+                    }
+                  }}
+                  role="checkbox"
+                  aria-checked={rm.checked}
+                  tabIndex={0}
+                >
+                  <span className="split-name">{rm.name}</span>
+                  <div className="split-controls">
+                    <span className="split-preview">
+                      ₪{(previewMap[rm.id] || 0).toFixed(2)}
+                    </span>
+                    <div
+                      className={`split-checkbox ${rm.checked ? 'checked' : ''}`}
+                      aria-hidden="true"
+                    >
+                      {rm.checked && '✓'}
+                    </div>
                   </div>
                 </div>
+
+                {rm.checked && splitMethod === 'percent' && (
+                  <div
+                    className="split-input-row"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <label className="split-input-label" htmlFor={`pct-${rm.id}`}>
+                      אחוז
+                    </label>
+                    <input
+                      id={`pct-${rm.id}`}
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      className="split-field-input"
+                      value={rm.percent}
+                      onChange={(e) =>
+                        updateRoommateField(rm.id, 'percent', e.target.value)
+                      }
+                    />
+                    <span className="split-input-suffix">%</span>
+                  </div>
+                )}
+
+                {rm.checked && splitMethod === 'fixed' && (
+                  <div
+                    className="split-input-row"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <label className="split-input-label" htmlFor={`fix-${rm.id}`}>
+                      סכום
+                    </label>
+                    <input
+                      id={`fix-${rm.id}`}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      className="split-field-input"
+                      value={rm.fixed}
+                      onChange={(e) =>
+                        updateRoommateField(rm.id, 'fixed', e.target.value)
+                      }
+                    />
+                    <span className="split-input-suffix">₪</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
 
-          <div className="split-footer-info">
-            חלוקה שווה — הסכום הכולל יחולק באופן שווה
-          </div>
+          <div className="split-footer-info">{splitHint}</div>
         </div>
 
-        {/* 4. Full Width Lime Button */}
         <button type="submit" className="save-expense-btn" disabled={loading}>
           {loading ? 'שומר...' : 'שמור הוצאה'}
         </button>

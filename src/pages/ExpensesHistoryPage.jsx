@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { formatLocalDate, currentMonthKey, monthDateRange, formatMonthLabel } from '../lib/dates';
-import { applyEqualSplitBalance } from '../lib/expenseBalances';
+import {
+  applyEqualSplitBalance,
+  reverseExpenseBalance,
+  restoreExpenseBalance,
+} from '../lib/expenseBalances';
 import './ExpensesHistoryPage.css';
 
 /** @typedef {'all' | 'mine' | 'others'} ExpenseFilter */
@@ -242,14 +246,12 @@ export default function ExpensesHistoryPage() {
       setEditSaving(true);
       setEditError('');
 
-      // Undo old impact first; restore if the row update fails
-      await applyEqualSplitBalance(
+      // Undo old impact first (shares when present); restore if the row update fails
+      await reverseExpenseBalance(
         supabase,
         apartmentId,
-        memberIds,
-        editExpense.paid_by,
-        editExpense.amount,
-        -1
+        editExpense,
+        memberIds
       );
 
       const { error } = await supabase
@@ -264,17 +266,16 @@ export default function ExpensesHistoryPage() {
         .eq('apartment_id', apartmentId);
 
       if (error) {
-        await applyEqualSplitBalance(
+        await restoreExpenseBalance(
           supabase,
           apartmentId,
-          memberIds,
-          editExpense.paid_by,
-          editExpense.amount,
-          1
+          editExpense,
+          memberIds
         );
         throw error;
       }
 
+      // Re-apply as equal split across apartment members (edit UI does not change shares)
       await applyEqualSplitBalance(
         supabase,
         apartmentId,
@@ -283,6 +284,20 @@ export default function ExpensesHistoryPage() {
         parsedAmount,
         1
       );
+
+      // Keep expense_shares in sync with the equal-split re-apply
+      await supabase.from('expense_shares').delete().eq('expense_id', editExpense.id);
+      if (memberIds.length > 0) {
+        const each = parsedAmount / memberIds.length;
+        const { error: sharesError } = await supabase.from('expense_shares').insert(
+          memberIds.map((uid) => ({
+            expense_id: editExpense.id,
+            user_id: uid,
+            amount: each,
+          }))
+        );
+        if (sharesError) throw sharesError;
+      }
 
       setEditOpen(false);
       setEditExpense(null);
@@ -301,13 +316,11 @@ export default function ExpensesHistoryPage() {
       setDeleteSaving(true);
       setDeleteError('');
 
-      await applyEqualSplitBalance(
+      await reverseExpenseBalance(
         supabase,
         apartmentId,
-        memberIds,
-        deleteTarget.paid_by,
-        deleteTarget.amount,
-        -1
+        deleteTarget,
+        memberIds
       );
 
       const { error } = await supabase
@@ -317,13 +330,11 @@ export default function ExpensesHistoryPage() {
         .eq('apartment_id', apartmentId);
 
       if (error) {
-        await applyEqualSplitBalance(
+        await restoreExpenseBalance(
           supabase,
           apartmentId,
-          memberIds,
-          deleteTarget.paid_by,
-          deleteTarget.amount,
-          1
+          deleteTarget,
+          memberIds
         );
         throw error;
       }

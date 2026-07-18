@@ -17,9 +17,8 @@ export default function ProtectedRoute() {
     return <Navigate to="/onboarding" replace />;
   }
 
-  if (hasApartment && isOnboarding) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  // Allow staying on /onboarding after create/join so success UI + toast can show.
+  // OnboardingPage redirects already-membered users itself when appropriate.
 
   return <Outlet />;
 }

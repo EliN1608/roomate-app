@@ -30,16 +30,89 @@
 
 .balance-title {
   font-family: var(--font-mono);
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
   letter-spacing: -0.5px;
+}
+
+.balance-title-positive {
+  color: var(--success);
+}
+
+.balance-title-negative {
+  color: #ff8f8f;
+}
+
+.balance-title-neutral {
+  color: var(--text-on-dark);
 }
 
 .balance-subtitle {
   font-family: var(--font-body);
   font-size: 12px;
   color: var(--text-muted); /* #888888 */
+  margin-bottom: var(--spacing-xs);
+}
+
+.balance-update-time {
+  font-size: 11px;
+  color: var(--text-muted);
   margin-bottom: var(--spacing-sm);
+}
+
+.balance-people-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 8px 0 16px;
+}
+
+.balance-people-empty {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+
+.balance-person-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.balance-person-card.relation-owes_me {
+  border-color: rgba(74, 222, 128, 0.45);
+}
+
+.balance-person-card.relation-i_owe {
+  border-color: rgba(255, 143, 143, 0.45);
+}
+
+.balance-person-name {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.balance-person-amount {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.balance-person-relation {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.35;
 }
 
 .balance-btn {
@@ -52,17 +125,140 @@
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  align-self: flex-start;
+  align-self: flex-end; /* left side in RTL */
+  margin-top: auto;
   transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
-.balance-btn:hover {
+.balance-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.balance-btn:hover:not(:disabled) {
   opacity: 0.9;
   transform: translateY(-1px);
 }
 
-.balance-btn:active {
+.balance-btn:active:not(:disabled) {
   transform: translateY(0);
+}
+
+/* Settle modal */
+.settle-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1300;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.settle-modal-card {
+  width: min(420px, 100%);
+  background: #fff;
+  color: var(--text-primary);
+  border-radius: 20px;
+  padding: 22px;
+  box-sizing: border-box;
+  direction: rtl;
+}
+
+.settle-modal-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+
+.settle-modal-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0 0 18px;
+  line-height: 1.45;
+}
+
+.settle-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settle-field-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.settle-field-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid #ddd;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.settle-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.settle-error {
+  background: rgba(255, 68, 68, 0.08);
+  border: 1px solid rgba(255, 68, 68, 0.35);
+  color: var(--error);
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 13px;
+}
+
+.settle-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.settle-save-btn,
+.settle-cancel-btn {
+  flex: 1;
+  border: none;
+  border-radius: 12px;
+  padding: 12px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.settle-save-btn {
+  background: var(--accent);
+  color: var(--text-primary);
+}
+
+.settle-save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settle-cancel-btn {
+  background: #f2f2f2;
+  color: var(--text-primary);
+}
+
+@media (max-width: 520px) {
+  .balance-title {
+    font-size: 22px;
+  }
+
+  .balance-people-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
 }
 
 /* 2. Metrics Cards */

@@ -98,7 +98,33 @@
 .form-input:focus, .form-select:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(199, 255, 46, 0.2);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.recurring-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-input);
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  background: var(--bg-primary);
+}
+
+.recurring-row input[type='checkbox'] {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+
+.recurring-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 /* 3. Black Card "חלוקה עם" */
@@ -122,10 +148,44 @@
   margin: 0;
 }
 
+.split-method-bar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.split-method-btn {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 8px 10px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.split-method-btn.active {
+  background: var(--accent);
+  color: var(--bg-surface);
+  border-color: var(--accent);
+}
+
 .split-list {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
+}
+
+.split-row-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 4px;
 }
 
 .split-row {
@@ -154,11 +214,51 @@
   gap: var(--spacing-md);
 }
 
+.split-preview,
 .split-percentage {
   font-family: var(--font-mono);
   font-size: 14px;
   font-weight: 700;
-  color: var(--accent); /* Lime percentage */
+  color: var(--accent);
+}
+
+.split-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px 8px;
+}
+
+.split-input-label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 36px;
+}
+
+.split-field-input {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: var(--bg-surface-mid);
+  color: var(--text-on-dark);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.split-field-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.split-input-suffix {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 14px;
 }
 
 .split-checkbox {

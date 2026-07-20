@@ -166,6 +166,14 @@ BEGIN
     END IF;
   END IF;
 
+  DELETE FROM public.settlements s
+  WHERE s.apartment_id = apt_id
+    AND (s.from_user = v_uid OR s.to_user = v_uid);
+
+  DELETE FROM public.balances b
+  WHERE b.apartment_id = apt_id
+    AND b.user_id = v_uid;
+
   DELETE FROM public.members
   WHERE apartment_id = apt_id
     AND user_id = v_uid;
@@ -223,6 +231,14 @@ BEGIN
       RAISE EXCEPTION 'לא ניתן להסיר את המנהל היחיד. העבירו תפקיד מנהל קודם.';
     END IF;
   END IF;
+
+  DELETE FROM public.settlements s
+  WHERE s.apartment_id = apt_id
+    AND (s.from_user = target_user_id OR s.to_user = target_user_id);
+
+  DELETE FROM public.balances b
+  WHERE b.apartment_id = apt_id
+    AND b.user_id = target_user_id;
 
   DELETE FROM public.members
   WHERE apartment_id = apt_id

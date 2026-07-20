@@ -163,6 +163,13 @@ export default function ExpensesHistoryPage() {
   const selectedMonthLabel =
     monthChoices.find((m) => m.value === monthKey)?.label || formatMonthLabel(monthKey);
 
+  const payerLabel = (paidBy) => {
+    const id = String(paidBy || '');
+    if (id === String(user?.id)) return 'שילמתי אני';
+    const member = members.find((m) => String(m.id) === id);
+    return member ? `שילם ${member.name}` : 'שילם שותף';
+  };
+
   const openEdit = async (exp) => {
     setEditError('');
     setEditOpen(true);
@@ -387,9 +394,7 @@ export default function ExpensesHistoryPage() {
 
               <div className="expense-info">
                 <div className="expense-name">{exp.description}</div>
-                <div className="expense-payer">
-                  {exp.paid_by === user?.id ? 'שילמתי אני' : 'שילם שותף'}
-                </div>
+                <div className="expense-payer">{payerLabel(exp.paid_by)}</div>
               </div>
 
               <div className="expense-meta">

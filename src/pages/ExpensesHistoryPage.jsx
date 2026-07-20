@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IconEdit, IconTrash } from '../components/icons/TablerIcons';
 import { useAuth } from '../context/AuthContext';
@@ -16,6 +16,28 @@ import './ExpensesHistoryPage.css';
 /** @typedef {'all' | 'mine' | 'others'} ExpenseFilter */
 
 const ALL_MONTHS = 'all';
+const PAGE_SIZE = 40;
+
+function groupExpensesByMonth(list) {
+  const groups = [];
+  const indexByKey = new Map();
+
+  (list || []).forEach((exp) => {
+    const key =
+      exp.date && /^\d{4}-\d{2}/.test(exp.date) ? exp.date.slice(0, 7) : 'unknown';
+    if (!indexByKey.has(key)) {
+      indexByKey.set(key, groups.length);
+      groups.push({
+        key,
+        label: key === 'unknown' ? 'ללא תאריך' : formatMonthLabel(key),
+        items: [],
+      });
+    }
+    groups[indexByKey.get(key)].items.push(exp);
+  });
+
+  return groups;
+}
 
 export default function ExpensesHistoryPage() {
   const navigate = useNavigate();
@@ -45,6 +67,7 @@ export default function ExpensesHistoryPage() {
   const [deleteSaving, setDeleteSaving] = useState(false);
   const [monthMenuOpen, setMonthMenuOpen] = useState(false);
   const monthMenuRef = useRef(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const fetchMonthOptions = async () => {
     if (!apartmentId) {
@@ -125,6 +148,10 @@ export default function ExpensesHistoryPage() {
   useEffect(() => {
     fetchExpenses();
   }, [apartmentId, user?.id, filter, monthKey]);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [apartmentId, filter, monthKey, expenses.length]);
 
   useEffect(() => {
     if (!monthMenuOpen) return undefined;
@@ -277,6 +304,18 @@ export default function ExpensesHistoryPage() {
     .reduce((sum, exp) => sum + Number(exp.amount), 0)
     .toFixed(2);
 
+  const visibleExpenses = useMemo(
+    () => expenses.slice(0, visibleCount),
+    [expenses, visibleCount]
+  );
+
+  const monthGroups = useMemo(() => {
+    if (monthKey !== ALL_MONTHS) return null;
+    return groupExpensesByMonth(visibleExpenses);
+  }, [monthKey, visibleExpenses]);
+
+  const hasMore = visibleCount < expenses.length;
+
   const emptyMessage =
     filter === 'mine'
       ? 'אין הוצאות ששילמת עליהן'
@@ -285,6 +324,45 @@ export default function ExpensesHistoryPage() {
         : monthKey !== ALL_MONTHS
           ? 'אין הוצאות בחודש שנבחר'
           : 'אין הוצאות עדיין';
+
+  const renderExpenseRow = (exp) => (
+    <div key={exp.id} className="expense-row-card">
+      <div className="expense-icon-square">💰</div>
+
+      <div className="expense-info">
+        <div className="expense-name">{exp.description}</div>
+        <div className="expense-payer">{payerLabel(exp.paid_by)}</div>
+      </div>
+
+      <div className="expense-meta">
+        <div className="expense-amount">₪{Number(exp.amount).toFixed(2)}</div>
+        <div className="expense-date">{formatLocalDate(exp.date)}</div>
+        <div className="expense-actions">
+          <button
+            type="button"
+            className="expense-action-btn edit"
+            onClick={() => openEdit(exp)}
+            aria-label="ערוך"
+            title="ערוך"
+          >
+            <IconEdit size={16} stroke={1.75} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="expense-action-btn delete"
+            onClick={() => {
+              setDeleteError('');
+              setDeleteTarget(exp);
+            }}
+            aria-label="מחק"
+            title="מחק"
+          >
+            <IconTrash size={16} stroke={1.75} aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -364,7 +442,7 @@ export default function ExpensesHistoryPage() {
           className={`filter-btn ${filter === 'mine' ? 'active' : ''}`}
           onClick={() => setFilter('mine')}
         >
-          שולם על ידי
+          שילמתי
         </button>
         <button
           type="button"
@@ -373,7 +451,7 @@ export default function ExpensesHistoryPage() {
           className={`filter-btn ${filter === 'others' ? 'active' : ''}`}
           onClick={() => setFilter('others')}
         >
-          שולם ע״י אחרים
+          שילמו שותפים
         </button>
       </div>
 
@@ -387,46 +465,29 @@ export default function ExpensesHistoryPage() {
       {!fetchError && expenses.length === 0 ? (
         <div className="history-empty">{emptyMessage}</div>
       ) : (
-        <div className="expenses-list">
-          {expenses.map((exp) => (
-            <div key={exp.id} className="expense-row-card">
-              <div className="expense-icon-square">💰</div>
-
-              <div className="expense-info">
-                <div className="expense-name">{exp.description}</div>
-                <div className="expense-payer">{payerLabel(exp.paid_by)}</div>
-              </div>
-
-              <div className="expense-meta">
-                <div className="expense-amount">₪{Number(exp.amount).toFixed(2)}</div>
-                <div className="expense-date">{formatLocalDate(exp.date)}</div>
-                <div className="expense-actions">
-                  <button
-                    type="button"
-                    className="expense-action-btn edit"
-                    onClick={() => openEdit(exp)}
-                    aria-label="ערוך"
-                    title="ערוך"
-                  >
-                    <IconEdit size={16} stroke={1.75} aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    className="expense-action-btn delete"
-                    onClick={() => {
-                      setDeleteError('');
-                      setDeleteTarget(exp);
-                    }}
-                    aria-label="מחק"
-                    title="מחק"
-                  >
-                    <IconTrash size={16} stroke={1.75} aria-hidden="true" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <>
+          <div className="expenses-list">
+            {monthGroups
+              ? monthGroups.map((group) => (
+                  <section key={group.key} className="expense-month-group">
+                    <h2 className="expense-month-heading">{group.label}</h2>
+                    <div className="expense-month-items">
+                      {group.items.map((exp) => renderExpenseRow(exp))}
+                    </div>
+                  </section>
+                ))
+              : visibleExpenses.map((exp) => renderExpenseRow(exp))}
+          </div>
+          {hasMore && (
+            <button
+              type="button"
+              className="history-load-more"
+              onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
+            >
+              הצג עוד ({expenses.length - visibleCount})
+            </button>
+          )}
+        </>
       )}
 
       <button

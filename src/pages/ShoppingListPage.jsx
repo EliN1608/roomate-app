@@ -8,6 +8,7 @@ import {
 } from '../components/icons/TablerIcons';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { rpcUpdateApartmentShoppingSettings } from '../lib/apartmentApi';
 import {
   DEFAULT_SHOPPING_CATEGORIES,
   NEW_CATEGORY_OPTION,
@@ -397,11 +398,9 @@ export default function ShoppingListPage() {
     if (apartmentCategories.includes(cat)) return cat;
     const next = normalizeCategoryList([...apartmentCategories, cat]);
     setApartmentCategories(next);
-    const { error } = await supabase
-      .from('apartments')
-      .update({ shopping_categories: next })
-      .eq('id', apartmentId);
-    if (error) throw error;
+    await rpcUpdateApartmentShoppingSettings(supabase, apartmentId, {
+      shoppingCategories: next,
+    });
     return cat;
   };
 
@@ -766,16 +765,9 @@ export default function ShoppingListPage() {
     setCleanupEnabled(next);
     try {
       setSavingCleanup(true);
-      const { error } = await supabase
-        .from('apartments')
-        .update({ shopping_cleanup_enabled: next })
-        .eq('id', apartmentId);
-      if (error) {
-        if (isMissingColumnError(error, 'shopping_cleanup_enabled')) {
-          return;
-        }
-        throw error;
-      }
+      await rpcUpdateApartmentShoppingSettings(supabase, apartmentId, {
+        shoppingCleanupEnabled: next,
+      });
       if (next) {
         await runAutoCleanup(cleanupDays, true);
         await fetchItems();
@@ -793,11 +785,9 @@ export default function ShoppingListPage() {
     setCleanupDays(n);
     try {
       setSavingCleanup(true);
-      const { error } = await supabase
-        .from('apartments')
-        .update({ shopping_cleanup_days: n })
-        .eq('id', apartmentId);
-      if (error) throw error;
+      await rpcUpdateApartmentShoppingSettings(supabase, apartmentId, {
+        shoppingCleanupDays: n,
+      });
       if (cleanupEnabled) {
         await runAutoCleanup(n, true);
         await fetchItems();

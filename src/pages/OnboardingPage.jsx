@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { rpcFindApartmentByInvite } from '../lib/apartmentApi';
 import { supabase } from '../lib/supabase';
 import './OnboardingPage.css';
 
@@ -58,9 +59,10 @@ export default function OnboardingPage() {
           city: city
         })
         .select()
-        .single();
+        .maybeSingle();
       
       if (apartmentError) throw apartmentError;
+      if (!apartment?.id) throw new Error('לא התקבל מזהה דירה');
       
       // 3. Add user as admin member
       const { error: memberError } = await supabase
@@ -101,16 +103,10 @@ export default function OnboardingPage() {
     try {
       setLoading(true);
       
-      // 1. Find apartment by invite code
-      const { data: apartment, error: findError } = await supabase
-        .from('apartments')
-        .select('id, name')
-        .eq('invite_code', inviteCode.toUpperCase().trim()
-          .replace(/0/g, 'O')
-          .replace(/1/g, 'I'))
-        .maybeSingle();
+      // 1. Find apartment by invite code (server-side lookup)
+      const apartment = await rpcFindApartmentByInvite(supabase, inviteCode);
       
-      if (findError || !apartment) {
+      if (!apartment) {
         alert('קוד הזמנה לא נמצא. נסו שנית.');
         return;
       }

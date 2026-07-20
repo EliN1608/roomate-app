@@ -37,7 +37,7 @@ export async function fetchMyOpenBalance(supabase, apartmentId, userId) {
   const [{ data: expenses }, settlements] = await Promise.all([
     supabase
       .from('expenses')
-      .select('id, paid_by, amount, expense_shares(user_id, amount)')
+      .select('id, paid_by, amount, created_at, date, expense_shares(user_id, amount)')
       .eq('apartment_id', apartmentId),
     loadSettlements(supabase, apartmentId),
   ]);

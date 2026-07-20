@@ -5,11 +5,12 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { formatLocalDate, currentMonthKey, monthDateRange, formatMonthLabel } from '../lib/dates';
 import {
-  applyEqualSplitBalance,
-  reverseExpenseBalance,
-  restoreExpenseBalance,
-  resetApartmentBalancesIfNoExpenses,
-} from '../lib/expenseBalances';
+  rpcUpdateExpense,
+  rpcDeleteExpense,
+  fetchExpenseWithShares,
+  scaleSharesForAmount,
+} from '../lib/expensesApi';
+import { useApartmentMembers } from '../hooks/useApartmentMembers';
 import './ExpensesHistoryPage.css';
 
 /** @typedef {'all' | 'mine' | 'others'} ExpenseFilter */
@@ -20,8 +21,7 @@ export default function ExpensesHistoryPage() {
   const navigate = useNavigate();
   const { user, apartmentId } = useAuth();
   const [expenses, setExpenses] = useState([]);
-  const [members, setMembers] = useState([]);
-  const [memberIds, setMemberIds] = useState([]);
+  const { members, memberIds } = useApartmentMembers(apartmentId, user?.id);
   const [monthOptions, setMonthOptions] = useState([]);
   const [monthKey, setMonthKey] = useState(() => currentMonthKey());
   const [loading, setLoading] = useState(true);
@@ -35,6 +35,9 @@ export default function ExpensesHistoryPage() {
   const [editPayer, setEditPayer] = useState('');
   const [editDate, setEditDate] = useState('');
   const [editError, setEditError] = useState('');
+  const [editSplitMethod, setEditSplitMethod] = useState('equal');
+  const [editShares, setEditShares] = useState([]);
+  const [editOriginalAmount, setEditOriginalAmount] = useState(0);
   const [editSaving, setEditSaving] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -42,50 +45,6 @@ export default function ExpensesHistoryPage() {
   const [deleteSaving, setDeleteSaving] = useState(false);
   const [monthMenuOpen, setMonthMenuOpen] = useState(false);
   const monthMenuRef = useRef(null);
-
-  const fetchMembers = async () => {
-    if (!apartmentId || !user?.id) {
-      setMembers([]);
-      setMemberIds([]);
-      return;
-    }
-
-    const { data: membersData } = await supabase.rpc('get_apartment_members', {
-      apt_id: apartmentId,
-    });
-    const rows = membersData || [];
-    const ids = rows.map((m) => m.user_id);
-    setMemberIds(ids);
-
-    let profileMap = {};
-    const { data: rpcProfiles, error: rpcErr } = await supabase.rpc(
-      'get_apartment_profiles',
-      { apt_id: apartmentId }
-    );
-    if (!rpcErr && rpcProfiles) {
-      rpcProfiles.forEach((p) => {
-        profileMap[p.user_id] = p.full_name;
-      });
-    } else {
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('user_id, full_name')
-        .in('user_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000']);
-      (profilesData || []).forEach((p) => {
-        profileMap[p.user_id] = p.full_name;
-      });
-    }
-
-    setMembers(
-      rows.map((m, idx) => ({
-        id: m.user_id,
-        name:
-          m.user_id === user.id
-            ? 'אני'
-            : profileMap[m.user_id] || `שותף ${idx + 1}`,
-      }))
-    );
-  };
 
   const fetchMonthOptions = async () => {
     if (!apartmentId) {
@@ -160,7 +119,6 @@ export default function ExpensesHistoryPage() {
   };
 
   useEffect(() => {
-    fetchMembers();
     fetchMonthOptions();
   }, [apartmentId, user?.id]);
 
@@ -205,14 +163,28 @@ export default function ExpensesHistoryPage() {
   const selectedMonthLabel =
     monthChoices.find((m) => m.value === monthKey)?.label || formatMonthLabel(monthKey);
 
-  const openEdit = (exp) => {
+  const openEdit = async (exp) => {
+    setEditError('');
+    setEditOpen(true);
     setEditExpense(exp);
     setEditDescription(exp.description || '');
     setEditAmount(String(Number(exp.amount) || ''));
     setEditPayer(exp.paid_by || user?.id || '');
     setEditDate(exp.date || '');
-    setEditError('');
-    setEditOpen(true);
+    setEditOriginalAmount(Number(exp.amount) || 0);
+    setEditSplitMethod('equal');
+    setEditShares([]);
+
+    try {
+      const full = await fetchExpenseWithShares(supabase, exp.id);
+      if (full) {
+        setEditSplitMethod(full.split_method || 'equal');
+        setEditShares(full.shares || []);
+        setEditOriginalAmount(Number(full.amount) || 0);
+      }
+    } catch (err) {
+      setEditError(err.message || 'שגיאה בטעינת פרטי חלוקה');
+    }
   };
 
   const closeEdit = () => {
@@ -248,58 +220,23 @@ export default function ExpensesHistoryPage() {
       setEditSaving(true);
       setEditError('');
 
-      // Undo old impact first (shares when present); restore if the row update fails
-      await reverseExpenseBalance(
-        supabase,
-        apartmentId,
-        editExpense,
-        memberIds
-      );
-
-      const { error } = await supabase
-        .from('expenses')
-        .update({
-          description: editDescription.trim(),
-          amount: parsedAmount,
-          paid_by: editPayer,
-          date: editDate,
-        })
-        .eq('id', editExpense.id)
-        .eq('apartment_id', apartmentId);
-
-      if (error) {
-        await restoreExpenseBalance(
-          supabase,
-          apartmentId,
-          editExpense,
-          memberIds
-        );
-        throw error;
-      }
-
-      // Re-apply as equal split across apartment members (edit UI does not change shares)
-      await applyEqualSplitBalance(
-        supabase,
-        apartmentId,
-        memberIds,
-        editPayer,
-        parsedAmount,
-        1
-      );
-
-      // Keep expense_shares in sync with the equal-split re-apply
-      await supabase.from('expense_shares').delete().eq('expense_id', editExpense.id);
-      if (memberIds.length > 0) {
+      let shares = editShares;
+      if (shares.length === 0 && memberIds.length > 0) {
         const each = parsedAmount / memberIds.length;
-        const { error: sharesError } = await supabase.from('expense_shares').insert(
-          memberIds.map((uid) => ({
-            expense_id: editExpense.id,
-            user_id: uid,
-            amount: each,
-          }))
-        );
-        if (sharesError) throw sharesError;
+        shares = memberIds.map((uid) => ({ userId: uid, amount: each }));
+      } else if (Math.abs(parsedAmount - editOriginalAmount) > 0.005) {
+        shares = scaleSharesForAmount(shares, editOriginalAmount, parsedAmount);
       }
+
+      await rpcUpdateExpense(supabase, {
+        expenseId: editExpense.id,
+        description: editDescription.trim(),
+        amount: parsedAmount,
+        paidBy: editPayer,
+        date: editDate,
+        splitMethod: editSplitMethod,
+        shares,
+      });
 
       setEditOpen(false);
       setEditExpense(null);
@@ -318,30 +255,7 @@ export default function ExpensesHistoryPage() {
       setDeleteSaving(true);
       setDeleteError('');
 
-      await reverseExpenseBalance(
-        supabase,
-        apartmentId,
-        deleteTarget,
-        memberIds
-      );
-
-      const { error } = await supabase
-        .from('expenses')
-        .delete()
-        .eq('id', deleteTarget.id)
-        .eq('apartment_id', apartmentId);
-
-      if (error) {
-        await restoreExpenseBalance(
-          supabase,
-          apartmentId,
-          deleteTarget,
-          memberIds
-        );
-        throw error;
-      }
-
-      await resetApartmentBalancesIfNoExpenses(supabase, apartmentId);
+      await rpcDeleteExpense(supabase, deleteTarget.id);
 
       setDeleteTarget(null);
       await refreshAfterMutation();

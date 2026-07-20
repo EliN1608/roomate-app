@@ -475,7 +475,18 @@ export default function ExpensesHistoryPage() {
                 id="edit-payer"
                 className="expense-field-input"
                 value={editPayer}
-                onChange={(e) => setEditPayer(e.target.value)}
+                onChange={(e) => {
+                  setEditPayer(e.target.value);
+                  // Rebuild shares for equal split when payer changes,
+                  // so the new payer gets credit and balances stay correct.
+                  if (memberIds.length > 0) {
+                    const parsed = parseFloat(editAmount);
+                    const total = Number.isFinite(parsed) && parsed > 0 ? parsed : editOriginalAmount;
+                    const each = total / memberIds.length;
+                    setEditShares(memberIds.map((uid) => ({ userId: uid, amount: each })));
+                    setEditOriginalAmount(total);
+                  }
+                }}
               >
                 {members.map((m) => (
                   <option key={m.id} value={m.id}>

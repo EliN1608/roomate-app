@@ -221,8 +221,6 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.generate_recurring_expenses_for_month(date) TO authenticated;
-
--- Example (run once per month, or schedule with pg_cron):
+-- Example (run once per month via pg_cron / service_role only — NOT authenticated):
 -- SELECT public.generate_recurring_expenses_for_month();
--- SELECT public.generate_recurring_expenses_for_month('2026-08-01'::date);
+-- REVOKE for authenticated: see 002_expense_rpcs.sql

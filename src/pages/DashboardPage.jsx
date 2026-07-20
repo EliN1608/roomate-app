@@ -10,6 +10,7 @@ import {
   sumPairwiseBalance,
 } from '../lib/balances';
 import { EXPENSE_CATEGORIES } from '../lib/expenseSplits';
+import { useApartmentMembers } from '../hooks/useApartmentMembers';
 import { IconPlus, IconReceipt } from '../components/icons/TablerIcons';
 import './DashboardPage.css';
 
@@ -30,7 +31,7 @@ function categoryLabel(value) {
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { user, apartmentId } = useAuth();
+  const { user, apartmentId, apartmentName, apartmentCity, refreshApartment } = useAuth();
   const [expenses, setExpenses] = useState([]);
   const [balance, setBalance] = useState(0);
   const [roommateCards, setRoommateCards] = useState([]);
@@ -46,30 +47,17 @@ export default function DashboardPage() {
   const [settleError, setSettleError] = useState('');
   const [settleSaving, setSettleSaving] = useState(false);
 
+  const { members: apartmentMembers } = useApartmentMembers(apartmentId, user?.id);
+
   const fetchDashboardData = useCallback(async () => {
     if (!apartmentId || !user?.id) return;
 
     try {
       setLoading(true);
 
-      const { data: membersData } = await supabase.rpc('get_apartment_members', {
-        apt_id: apartmentId,
-      });
-      const memberRows = membersData || [];
-      const profileFromRpc = {};
-      memberRows.forEach((m) => {
-        if (m.full_name) profileFromRpc[String(m.user_id)] = m.full_name;
-      });
-
-      const nameOf = (uid, idx) => {
-        const id = String(uid);
-        if (id === String(user.id)) return 'אני';
-        return profileFromRpc[id] || `שותף ${idx + 1}`;
-      };
-
-      const members = memberRows.map((m, idx) => ({
-        user_id: String(m.user_id),
-        name: nameOf(m.user_id, idx),
+      const members = apartmentMembers.map((m) => ({
+        user_id: String(m.id),
+        name: m.name,
       }));
 
       const firstDay = firstDayOfLocalMonth();
@@ -105,7 +93,7 @@ export default function DashboardPage() {
           .limit(5),
         supabase
           .from('expenses')
-          .select('id, paid_by, amount, expense_shares(user_id, amount)')
+          .select('id, paid_by, amount, created_at, date, expense_shares(user_id, amount)')
           .eq('apartment_id', apartmentId),
         supabase
           .from('expenses')
@@ -172,10 +160,11 @@ export default function DashboardPage() {
       const feed = [];
       expensesData.slice(0, 3).forEach((exp) => {
         const actorId = String(exp.paid_by);
+        const memberMatch = apartmentMembers.find((m) => String(m.id) === actorId);
         const actor =
           actorId === String(user.id)
             ? 'את/ה'
-            : profileFromRpc[actorId] || 'שותף';
+            : memberMatch?.name || 'שותף';
         feed.push({
           id: `exp-${exp.id}`,
           at: exp.created_at || exp.date,
@@ -184,10 +173,11 @@ export default function DashboardPage() {
       });
       (boughtRes.data || []).slice(0, 3).forEach((item) => {
         const actorId = String(item.added_by || '');
+        const memberMatch = apartmentMembers.find((m) => String(m.id) === actorId);
         const actor =
           actorId === String(user.id)
             ? 'את/ה'
-            : profileFromRpc[actorId] || 'שותף';
+            : memberMatch?.name || 'שותף';
         feed.push({
           id: `shop-${item.id}`,
           at: item.completed_at || item.created_at,
@@ -203,7 +193,13 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [apartmentId, user?.id]);
+  }, [apartmentId, user?.id, apartmentMembers]);
+
+  useEffect(() => {
+    if (apartmentId && user?.id && !apartmentName?.trim()) {
+      refreshApartment(user.id);
+    }
+  }, [apartmentId, user?.id, apartmentName, refreshApartment]);
 
   useEffect(() => {
     if (!apartmentId || !user?.id) {
@@ -284,6 +280,15 @@ export default function DashboardPage() {
 
   return (
     <div className="dashboard-container" id="dashboard-page">
+      <header className="dashboard-apartment-header">
+        <h1 className="dashboard-apartment-name">
+          {apartmentName?.trim() || 'הדירה שלי'}
+        </h1>
+        {apartmentCity?.trim() && (
+          <p className="dashboard-apartment-city">{apartmentCity}</p>
+        )}
+      </header>
+
       {/* Combined info cards — count + amount / shopping together */}
       <div className="metrics-row">
         <button

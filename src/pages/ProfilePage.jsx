@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import Badge from '../components/Badge/Badge';
 import Toast from '../components/Toast/Toast';
 import { IconDotsVertical, IconEdit } from '../components/icons/TablerIcons';
+import { rpcUpdateApartmentDetails } from '../lib/apartmentApi';
 import { fetchMyOpenBalance } from '../lib/openBalance';
 import { EPS } from '../lib/balances';
 import './ProfilePage.css';
@@ -332,18 +333,13 @@ export default function ProfilePage() {
       return;
     }
     try {
-      const { error } = await supabase
-        .from('apartments')
-        .update({
-          name: editName,
-          city: editCity,
-          street: editStreet,
-          building_number: editBuilding,
-          apartment_number: editApartmentNum,
-        })
-        .eq('id', apartmentId);
-
-      if (error) throw error;
+      await rpcUpdateApartmentDetails(supabase, apartmentId, {
+        name: editName,
+        city: editCity,
+        street: editStreet,
+        buildingNumber: editBuilding,
+        apartmentNumber: editApartmentNum,
+      });
 
       setApartmentData((prev) => ({
         ...prev,

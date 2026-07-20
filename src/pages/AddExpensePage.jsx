@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { toLocalDateString } from '../lib/dates';
-import { applySharesBalance } from '../lib/expenseBalances';
+import { rpcCreateExpense } from '../lib/expensesApi';
+import { useApartmentMembers } from '../hooks/useApartmentMembers';
 import {
   EXPENSE_CATEGORIES,
   SPLIT_METHODS,
@@ -48,49 +49,28 @@ export default function AddExpensePage() {
     }
   }, [user]);
 
+  const { members: memberRows, loading: membersLoading, error: membersError } =
+    useApartmentMembers(apartmentId, user?.id);
+
   useEffect(() => {
-    if (!apartmentId) return;
-    const fetchMembers = async () => {
-      try {
-        const { data: membersData } = await supabase.rpc('get_apartment_members', {
-          apt_id: apartmentId,
-        });
+    if (!memberRows.length) {
+      setRoommates([]);
+      return;
+    }
 
-        if (!membersData) return;
+    const n = memberRows.length || 1;
+    const equalPct = (100 / n).toFixed(1);
 
-        const userIds = membersData.map((m) => m.user_id);
-        const { data: profilesData } = await supabase
-          .from('profiles')
-          .select('user_id, full_name')
-          .in('user_id', userIds);
-
-        const profileMap = {};
-        (profilesData || []).forEach((p) => {
-          profileMap[p.user_id] = p.full_name;
-        });
-
-        const n = membersData.length || 1;
-        const equalPct = (100 / n).toFixed(1);
-        const equalFixed = '';
-
-        setRoommates(
-          membersData.map((m) => ({
-            id: m.user_id,
-            name:
-              m.user_id === user?.id
-                ? 'אני'
-                : profileMap[m.user_id] || 'שותף',
-            checked: true,
-            percent: equalPct,
-            fixed: equalFixed,
-          }))
-        );
-      } catch (err) {
-        console.error('Error fetching members:', err);
-      }
-    };
-    fetchMembers();
-  }, [apartmentId, user?.id]);
+    setRoommates(
+      memberRows.map((m) => ({
+        id: m.id,
+        name: m.name,
+        checked: true,
+        percent: equalPct,
+        fixed: '',
+      }))
+    );
+  }, [memberRows]);
 
   const checkedRoommates = useMemo(
     () => roommates.filter((r) => r.checked),
@@ -227,36 +207,17 @@ export default function AddExpensePage() {
     try {
       setLoading(true);
 
-      const { data: expenseRow, error: expenseError } = await supabase
-        .from('expenses')
-        .insert({
-          apartment_id: apartmentId,
-          paid_by: payer,
-          description: description.trim(),
-          amount: parsedAmount,
-          date: expenseDate,
-          category,
-          is_recurring: isRecurring,
-          split_method: splitMethod,
-        })
-        .select('id')
-        .maybeSingle();
-
-      if (expenseError) throw expenseError;
-      if (!expenseRow?.id) throw new Error('לא התקבל מזהה הוצאה');
-
-      const shareRows = shares.map((s) => ({
-        expense_id: expenseRow.id,
-        user_id: s.userId,
-        amount: s.amount,
-      }));
-
-      const { error: sharesError } = await supabase
-        .from('expense_shares')
-        .insert(shareRows);
-      if (sharesError) throw sharesError;
-
-      await applySharesBalance(supabase, apartmentId, shares, payer, 1);
+      await rpcCreateExpense(supabase, {
+        apartmentId,
+        paidBy: payer,
+        description: description.trim(),
+        amount: parsedAmount,
+        date: expenseDate,
+        category,
+        isRecurring,
+        splitMethod,
+        shares,
+      });
 
       navigateAfterClose.current = true;
       showToast('ההוצאה נוספה בהצלחה', 'success');
@@ -288,6 +249,16 @@ export default function AddExpensePage() {
         <h1 className="expense-title">הוספת הוצאה</h1>
         <div style={{ width: '24px' }} />
       </div>
+
+      {(membersLoading || membersError || (!membersLoading && roommates.length === 0)) && (
+        <div className="form-card" style={{ marginBottom: 16 }}>
+          {membersLoading && <p className="body">טוען שותפים...</p>}
+          {membersError && <p className="body" style={{ color: 'var(--error)' }}>{membersError}</p>}
+          {!membersLoading && !membersError && roommates.length === 0 && (
+            <p className="body">לא נמצאו שותפים בדירה — לא ניתן לחלק הוצאה.</p>
+          )}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="expense-form">
         <div className="form-card">

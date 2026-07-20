@@ -27,6 +27,23 @@ export function AuthProvider({ children }) {
 
   const checkApartment = async (userId) => {
     try {
+      const { data: rpcRows, error: rpcError } = await supabase.rpc('get_my_apartment');
+
+      if (!rpcError && rpcRows?.length) {
+        const row = rpcRows[0];
+        setApartmentId(row.apartment_id);
+        setHasApartment(true);
+        setUserRole(row.role || 'member');
+        setApartmentName(row.name || '');
+        setApartmentInviteCode(row.invite_code || '');
+        setApartmentCity(row.city || '');
+        setApartmentAddress(
+          `${row.street || ''} ${row.building_number || ''}, דירה ${row.apartment_number || ''}`.trim()
+        );
+        return true;
+      }
+
+      // Fallback if RPC not deployed yet
       const { data: memberData, error: memberError } = await supabase
         .from('members')
         .select('apartment_id, role')
@@ -34,24 +51,26 @@ export function AuthProvider({ children }) {
         .maybeSingle();
 
       if (memberError) throw memberError;
-      
+
       if (memberData) {
         setApartmentId(memberData.apartment_id);
         setHasApartment(true);
         setUserRole(memberData.role || 'member');
 
-        const { data: apartmentData } = await supabase
+        const { data: apartmentData, error: aptError } = await supabase
           .from('apartments')
           .select('name, street, building_number, apartment_number, invite_code, city')
           .eq('id', memberData.apartment_id)
           .maybeSingle();
-        
+
+        if (aptError) console.error('Apartment fetch error:', aptError);
+
         if (apartmentData) {
-          setApartmentName(apartmentData.name);
-          setApartmentInviteCode(apartmentData.invite_code);
+          setApartmentName(apartmentData.name || '');
+          setApartmentInviteCode(apartmentData.invite_code || '');
           setApartmentCity(apartmentData.city || '');
           setApartmentAddress(
-            `${apartmentData.street || ''} ${apartmentData.building_number || ''}, דירה ${apartmentData.apartment_number || ''}`
+            `${apartmentData.street || ''} ${apartmentData.building_number || ''}, דירה ${apartmentData.apartment_number || ''}`.trim()
           );
         }
         return true;
@@ -60,6 +79,7 @@ export function AuthProvider({ children }) {
       clearApartmentState();
       return false;
     } catch (err) {
+      console.error('checkApartment error:', err);
       clearApartmentState();
       return false;
     }

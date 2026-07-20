@@ -102,17 +102,34 @@ export function computePairwiseNets(myId, members, expenses, settlements) {
   // Snapshot expense-only nets before settlements
   const fromExpenses = { ...nets };
 
-  for (const row of settlements || []) {
+  const expenseTimes = expenseList
+    .map((exp) => {
+      const raw = exp.created_at ?? exp.date;
+      return raw ? new Date(raw).getTime() : NaN;
+    })
+    .filter((t) => Number.isFinite(t));
+  const earliestExpenseMs =
+    expenseTimes.length > 0 ? Math.min(...expenseTimes) : null;
+
+  // Ignore settlements recorded before the current expense era (e.g. after
+  // all expenses were deleted and new ones added).
+  const applicableSettlements = (settlements || []).filter((row) => {
+    if (earliestExpenseMs == null) return true;
+    if (!row.created_at) return true;
+    return new Date(row.created_at).getTime() >= earliestExpenseMs;
+  });
+
+  for (const row of applicableSettlements) {
     const from = String(row.from_user ?? row.fromUser);
     const to = String(row.to_user ?? row.toUser);
     const amount = Number(row.amount) || 0;
     if (amount <= 0) continue;
 
-    // from paid to → reduces from's debt toward to
-    if (to === me && nets[from] !== undefined) {
-      nets[from] -= amount;
-    } else if (from === me && nets[to] !== undefined) {
-      nets[to] += amount;
+    // from paid to → reduces from's debt toward to (capped at open debt)
+    if (to === me && nets[from] !== undefined && nets[from] > EPS) {
+      nets[from] -= Math.min(amount, nets[from]);
+    } else if (from === me && nets[to] !== undefined && nets[to] < -EPS) {
+      nets[to] += Math.min(amount, -nets[to]);
     }
   }
 

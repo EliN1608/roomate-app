@@ -31,7 +31,7 @@ function categoryLabel(value) {
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { user, apartmentId, apartmentName, apartmentCity, refreshApartment } = useAuth();
+  const { user, apartmentId, apartmentName, refreshApartment } = useAuth();
   const [expenses, setExpenses] = useState([]);
   const [balance, setBalance] = useState(0);
   const [roommateCards, setRoommateCards] = useState([]);
@@ -284,55 +284,7 @@ export default function DashboardPage() {
         <h1 className="dashboard-apartment-name">
           {apartmentName?.trim() || 'הדירה שלי'}
         </h1>
-        {apartmentCity?.trim() && (
-          <p className="dashboard-apartment-city">{apartmentCity}</p>
-        )}
       </header>
-
-      {/* Combined info cards — count + amount / shopping together */}
-      <div className="metrics-row">
-        <button
-          type="button"
-          className="metric-card metric-card--nav"
-          onClick={() => navigate('/expenses')}
-        >
-          <div className="metric-label">הוצאות החודש</div>
-          <div className="metric-value">{monthExpenseCount}</div>
-          <div className="metric-secondary">
-            סה״כ ₪
-            {totalMonth.toLocaleString('he-IL', { maximumFractionDigits: 0 })}
-          </div>
-        </button>
-        <button
-          type="button"
-          className="metric-card metric-card--nav"
-          onClick={() => navigate('/shopping')}
-        >
-          <div className="metric-label">פריטים לקנייה</div>
-          <div className="metric-value">{shoppingCount}</div>
-          <div className="metric-secondary">ברשימה הפתוחה</div>
-        </button>
-      </div>
-
-      {/* Action buttons — visually distinct from info cards */}
-      <div className="quick-actions-row dashboard-quick-top">
-        <button
-          type="button"
-          className="quick-action-btn quick-action-btn--accent"
-          onClick={() => navigate('/expenses/add')}
-        >
-          <IconPlus size={18} stroke={2.25} className="quick-action-plus" />
-          <span className="quick-action-label">הוסף הוצאה</span>
-        </button>
-        <button
-          type="button"
-          className="quick-action-btn quick-action-btn--accent"
-          onClick={() => navigate('/shopping')}
-        >
-          <IconPlus size={18} stroke={2.25} className="quick-action-plus" />
-          <span className="quick-action-label">הוסף לרשימת קניות</span>
-        </button>
-      </div>
 
       {isEmptyApartment ? (
         <section className="dashboard-empty-state">
@@ -359,52 +311,100 @@ export default function DashboardPage() {
           </div>
         </section>
       ) : (
-        <>
-          <div className="balance-card">
-            <div className="balance-card-header">
-              <div className="balance-label">מאזן הדירה שלך</div>
-              <div className="balance-update-time">
-                עודכן {lastUpdated.toLocaleTimeString('he-IL')}
-              </div>
-            </div>
-            <div className={`balance-title balance-title-${headline.tone}`}>
-              {headline.text}
-            </div>
-
-            <div className="balance-people-grid">
-              {roommateCards.length === 0 ? (
-                <div className="balance-people-empty">
-                  אין שותפים נוספים בדירה עדיין
-                </div>
-              ) : (
-                roommateCards.map((card) => (
-                  <button
-                    key={card.id}
-                    type="button"
-                    className={`balance-person-card relation-${card.relation}${
-                      card.relation !== 'settled' ? ' is-actionable' : ''
-                    }`}
-                    onClick={() => openSettleForCard(card)}
-                    disabled={card.relation === 'settled'}
-                  >
-                    <div className="balance-person-name">{card.name}</div>
-                    <div className="balance-person-amount">
-                      {card.relation === 'settled'
-                        ? '₪0.00'
-                        : `₪${card.amount.toFixed(2)}`}
-                    </div>
-                    <div className="balance-person-relation">
-                      {card.relation === 'owes_me' && 'חייב/ת לך · לחצו להסדרה'}
-                      {card.relation === 'i_owe' &&
-                        `אתה חייב ל-${card.name} · לחצו להסדרה`}
-                      {card.relation === 'settled' && 'מאוזנים'}
-                    </div>
-                  </button>
-                ))
-              )}
+        <div className="balance-card">
+          <div className="balance-card-header">
+            <div className="balance-label">מאזן הדירה שלך</div>
+            <div className="balance-update-time">
+              עודכן {lastUpdated.toLocaleTimeString('he-IL')}
             </div>
           </div>
+          <div className={`balance-title balance-title-${headline.tone}`}>
+            {headline.text}
+          </div>
 
+          <div className="balance-people-grid">
+            {roommateCards.length === 0 ? (
+              <div className="balance-people-empty">
+                אין שותפים נוספים בדירה עדיין
+              </div>
+            ) : (
+              roommateCards.map((card) => (
+                <button
+                  key={card.id}
+                  type="button"
+                  className={`balance-person-card relation-${card.relation}${
+                    card.relation !== 'settled' ? ' is-actionable' : ''
+                  }`}
+                  onClick={() => openSettleForCard(card)}
+                  disabled={card.relation === 'settled'}
+                >
+                  <div className="balance-person-name">{card.name}</div>
+                  <div className="balance-person-amount">
+                    {card.relation === 'settled'
+                      ? '₪0.00'
+                      : `₪${card.amount.toFixed(2)}`}
+                  </div>
+                  <div className="balance-person-relation">
+                    {card.relation === 'owes_me' && 'חייב/ת לך · לחצו להסדרה'}
+                    {card.relation === 'i_owe' &&
+                      `אתה חייב ל-${card.name} · לחצו להסדרה`}
+                    {card.relation === 'settled' && 'מאוזנים'}
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="metrics-row">
+        <div className="metric-card">
+          <button
+            type="button"
+            className="metric-card-main"
+            onClick={() => navigate('/expenses')}
+          >
+            <div className="metric-label">הוצאות החודש</div>
+            <div className="metric-value">{monthExpenseCount}</div>
+            <div className="metric-secondary">
+              סה״כ ₪
+              {totalMonth.toLocaleString('he-IL', { maximumFractionDigits: 0 })}
+            </div>
+          </button>
+          <button
+            type="button"
+            className="metric-add-btn"
+            onClick={() => navigate('/expenses/add')}
+            aria-label="הוסף הוצאה"
+            title="הוסף הוצאה"
+          >
+            <IconPlus size={18} stroke={2.5} aria-hidden="true" />
+          </button>
+        </div>
+        <div className="metric-card">
+          <button
+            type="button"
+            className="metric-card-main"
+            onClick={() => navigate('/shopping')}
+          >
+            <div className="metric-label">פריטים לקנייה</div>
+            <div className="metric-value">{shoppingCount}</div>
+            <div className="metric-secondary">ברשימה הפתוחה</div>
+          </button>
+          <button
+            type="button"
+            className="metric-add-btn"
+            onClick={() => navigate('/shopping')}
+            aria-label="הוסף לרשימת קניות"
+            title="הוסף לרשימת קניות"
+          >
+            <IconPlus size={18} stroke={2.5} aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+
+      {!isEmptyApartment && (
+        <>
           {activity.length > 0 && (
             <section className="activity-section">
               <h2 className="section-title">פעילות אחרונה</h2>

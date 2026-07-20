@@ -38,7 +38,13 @@ export function AuthProvider({ children }) {
         setApartmentInviteCode(row.invite_code || '');
         setApartmentCity(row.city || '');
         setApartmentAddress(
-          `${row.street || ''} ${row.building_number || ''}, דירה ${row.apartment_number || ''}`.trim()
+          [
+            `${row.street || ''} ${row.building_number || ''}`.trim(),
+            row.apartment_number ? `דירה ${row.apartment_number}` : '',
+            row.city || '',
+          ]
+            .filter(Boolean)
+            .join(', ')
         );
         return true;
       }
@@ -70,7 +76,15 @@ export function AuthProvider({ children }) {
           setApartmentInviteCode(apartmentData.invite_code || '');
           setApartmentCity(apartmentData.city || '');
           setApartmentAddress(
-            `${apartmentData.street || ''} ${apartmentData.building_number || ''}, דירה ${apartmentData.apartment_number || ''}`.trim()
+            [
+              `${apartmentData.street || ''} ${apartmentData.building_number || ''}`.trim(),
+              apartmentData.apartment_number
+                ? `דירה ${apartmentData.apartment_number}`
+                : '',
+              apartmentData.city || '',
+            ]
+              .filter(Boolean)
+              .join(', ')
           );
         }
         return true;

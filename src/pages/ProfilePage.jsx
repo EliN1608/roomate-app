@@ -622,15 +622,16 @@ export default function ProfilePage() {
             <span className="info-label">כתובת הדירה</span>
             <span className="info-value">
               {apartmentData
-                ? `${apartmentData.street || ''} ${apartmentData.building_number || ''}, דירה ${apartmentData.apartment_number || ''}`
+                ? [
+                    `${apartmentData.street || ''} ${apartmentData.building_number || ''}`.trim(),
+                    apartmentData.apartment_number
+                      ? `דירה ${apartmentData.apartment_number}`
+                      : '',
+                    apartmentData.city || '',
+                  ]
+                    .filter(Boolean)
+                    .join(', ') || 'לא מוגדר'
                 : 'לא מוגדר'}
-            </span>
-          </div>
-
-          <div className="info-row">
-            <span className="info-label">עיר</span>
-            <span className="info-value">
-              {apartmentData?.city || 'לא מוגדר'}
             </span>
           </div>
 

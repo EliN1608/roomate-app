@@ -1,8 +1,14 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import UserAvatar from '../UserAvatar';
+import '../UserAvatar.css';
 import './BottomNav.css';
 
 export default function BottomNav() {
+  const { avatarUrl, displayName } = useAuth();
+  const fullName = displayName || 'משתמש';
+
   const tabs = [
     {
       name: 'בית',
@@ -42,6 +48,7 @@ export default function BottomNav() {
     {
       name: 'פרופיל',
       path: '/profile',
+      isProfile: true,
       icon: (
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -59,7 +66,18 @@ export default function BottomNav() {
           to={tab.path}
           className={({ isActive }) => `bottom-nav-tab ${isActive ? 'active' : ''}`}
         >
-          <span className="bottom-nav-icon">{tab.icon}</span>
+          <span className="bottom-nav-icon">
+            {tab.isProfile ? (
+              <UserAvatar
+                src={avatarUrl}
+                name={fullName}
+                className="bottom-nav-avatar"
+                size={22}
+              />
+            ) : (
+              tab.icon
+            )}
+          </span>
           <span className="bottom-nav-label">{tab.name}</span>
         </NavLink>
       ))}

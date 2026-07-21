@@ -1,19 +1,15 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import UserAvatar from '../UserAvatar';
+import '../UserAvatar.css';
 import './Sidebar.css';
 
 export default function Sidebar() {
   const navigate = useNavigate();
-  const { user, apartmentName } = useAuth();
+  const { apartmentName, avatarUrl, displayName } = useAuth();
 
-  const fullName = user?.user_metadata?.full_name || 'משתמש';
-  const initials = fullName
-    .split(' ')
-    .map(w => w[0])
-    .join('')
-    .substring(0, 2)
-    .toUpperCase();
+  const fullName = displayName || 'משתמש';
 
   const navItems = [
     {
@@ -65,12 +61,10 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar" id="sidebar">
-      {/* Top Section: Logo */}
       <div className="sidebar-top">
         <span className="sidebar-logo">RooMate</span>
       </div>
 
-      {/* Middle Section: Navigation Items */}
       <nav className="sidebar-nav">
         {navItems.map((item) => (
           <NavLink
@@ -84,15 +78,20 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Bottom Section: User Info */}
       <div className="sidebar-footer">
-        <div 
-          className="sidebar-user-avatar" 
+        <button
+          type="button"
+          className="sidebar-user-avatar-btn"
           onClick={() => navigate('/profile')}
-          style={{ cursor: 'pointer' }}
+          aria-label="פרופיל"
         >
-          {initials}
-        </div>
+          <UserAvatar
+            src={avatarUrl}
+            name={fullName}
+            className="sidebar-user-avatar"
+            size={36}
+          />
+        </button>
         <div className="sidebar-user-details">
           <div className="sidebar-user-name">{fullName}</div>
           <div className="sidebar-user-apartment">{apartmentName || 'לא מחובר לדירה'}</div>

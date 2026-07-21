@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IconEdit, IconTrash } from '../components/icons/TablerIcons';
+import { IconEdit, IconTrash, IconPlus } from '../components/icons/TablerIcons';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { formatLocalDate, currentMonthKey, monthDateRange, formatMonthLabel } from '../lib/dates';
@@ -374,7 +374,18 @@ export default function ExpensesHistoryPage() {
 
   return (
     <div className="expenses-history-container" id="expenses-history-page">
-      <h1 className="history-title">היסטוריית הוצאות</h1>
+      <div className="history-header">
+        <h1 className="history-title">היסטוריית הוצאות</h1>
+        <button
+          type="button"
+          className="history-add-btn"
+          onClick={() => navigate('/expenses/add')}
+          aria-label="הוסף הוצאה חדשה"
+          title="הוסף הוצאה חדשה"
+        >
+          <IconPlus size={20} stroke={2.5} aria-hidden="true" />
+        </button>
+      </div>
 
       <div className="month-filter-row">
         <span className="month-filter-label" id="expense-month-label">
@@ -489,14 +500,6 @@ export default function ExpensesHistoryPage() {
           )}
         </>
       )}
-
-      <button
-        type="button"
-        className="add-expense-cta"
-        onClick={() => navigate('/expenses/add')}
-      >
-        + הוסף הוצאה חדשה
-      </button>
 
       {editOpen && editExpense && (
         <div className="expense-modal-overlay" onClick={closeEdit}>

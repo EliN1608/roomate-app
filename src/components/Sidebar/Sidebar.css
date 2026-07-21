@@ -95,6 +95,16 @@
   background-color: rgba(0, 0, 0, 0.01);
 }
 
+.sidebar-user-avatar-btn {
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 50%;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
 .sidebar-user-avatar {
   width: 36px;
   height: 36px;
@@ -110,6 +120,7 @@
   line-height: 1;
   flex-shrink: 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  object-fit: cover;
 }
 
 .sidebar-user-details {

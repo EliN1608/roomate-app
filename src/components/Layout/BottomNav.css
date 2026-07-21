@@ -49,6 +49,22 @@
   justify-content: center;
 }
 
+.bottom-nav-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: var(--bg-surface);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  box-shadow: 0 0 0 1.5px currentColor;
+}
+
+.bottom-nav-tab.active .bottom-nav-avatar {
+  box-shadow: 0 0 0 1.5px var(--accent);
+}
+
 /* Active tab state: black pill with lime icon/text */
 .bottom-nav-tab.active {
   background-color: var(--bg-surface); /* Black background */

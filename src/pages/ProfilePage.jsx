@@ -14,7 +14,15 @@ const SUCCESS_TOAST_MS = 2200;
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { user, apartmentId, userRole, logout, refreshApartment } = useAuth();
+  const {
+    user,
+    apartmentId,
+    userRole,
+    logout,
+    refreshApartment,
+    setAvatarUrl: setAuthAvatarUrl,
+    setDisplayName: setAuthDisplayName,
+  } = useAuth();
   const avatarInputRef = useRef(null);
 
   const [membersCount, setMembersCount] = useState(0);
@@ -233,6 +241,7 @@ export default function ProfilePage() {
       if (authError) throw authError;
 
       setDisplayName(trimmed);
+      setAuthDisplayName(trimmed);
       setProfile((prev) => ({ ...(prev || {}), full_name: trimmed }));
       setIsEditingName(false);
       await fetchMembers();
@@ -291,6 +300,7 @@ export default function ProfilePage() {
       });
 
       setProfile((prev) => ({ ...(prev || {}), avatar_url: publicUrl }));
+      setAuthAvatarUrl(publicUrl);
       await fetchMembers();
       showToast('תמונת הפרופיל עודכנה');
     } catch (err) {

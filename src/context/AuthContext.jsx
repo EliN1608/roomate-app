@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
 export const AuthContext = createContext();
@@ -14,6 +14,8 @@ export function AuthProvider({ children }) {
   const [apartmentInviteCode, setApartmentInviteCode] = useState('');
   const [apartmentCity, setApartmentCity] = useState('');
   const [userRole, setUserRole] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [displayName, setDisplayName] = useState('');
 
   const clearApartmentState = () => {
     setApartmentId(null);
@@ -24,6 +26,39 @@ export function AuthProvider({ children }) {
     setApartmentCity('');
     setUserRole('');
   };
+
+  const clearProfileState = () => {
+    setAvatarUrl('');
+    setDisplayName('');
+  };
+
+  const loadProfile = useCallback(async (userId, authUser) => {
+    if (!userId) {
+      clearProfileState();
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      const name =
+        data?.full_name?.trim() ||
+        authUser?.user_metadata?.full_name ||
+        'משתמש';
+      setDisplayName(name);
+      setAvatarUrl(data?.avatar_url || '');
+    } catch (err) {
+      console.error('loadProfile error:', err);
+      setDisplayName(authUser?.user_metadata?.full_name || 'משתמש');
+      setAvatarUrl('');
+    }
+  }, []);
 
   const checkApartment = async (userId) => {
     try {
@@ -104,9 +139,13 @@ export function AuthProvider({ children }) {
       setUser(session?.user ?? null);
       setIsLoggedIn(!!session?.user);
       if (session?.user) {
-        await checkApartment(session.user.id);
+        await Promise.all([
+          checkApartment(session.user.id),
+          loadProfile(session.user.id, session.user),
+        ]);
       } else {
         clearApartmentState();
+        clearProfileState();
       }
       setLoading(false);
     });
@@ -116,16 +155,20 @@ export function AuthProvider({ children }) {
         setUser(session?.user ?? null);
         setIsLoggedIn(!!session?.user);
         if (session?.user) {
-          await checkApartment(session.user.id);
+          await Promise.all([
+            checkApartment(session.user.id),
+            loadProfile(session.user.id, session.user),
+          ]);
         } else {
           clearApartmentState();
+          clearProfileState();
         }
         setLoading(false);
       }
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [loadProfile]);
 
   const login = async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -133,9 +176,10 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (email, password, fullName) => {
-    const { error } = await supabase.auth.signUp({ 
-      email, password,
-      options: { data: { full_name: fullName } }
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName } },
     });
     if (error) throw error;
   };
@@ -145,18 +189,37 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, isLoggedIn, loading,
-      apartmentId, hasApartment,
-      apartmentName, apartmentAddress, 
-      apartmentInviteCode, apartmentCity, userRole,
-      login, register, logout,
-      refreshApartment: async (userId) => {
-        const id = userId || user?.id;
-        if (!id) return false;
-        return checkApartment(id);
-      }
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoggedIn,
+        loading,
+        apartmentId,
+        hasApartment,
+        apartmentName,
+        apartmentAddress,
+        apartmentInviteCode,
+        apartmentCity,
+        userRole,
+        avatarUrl,
+        displayName,
+        setAvatarUrl,
+        setDisplayName,
+        login,
+        register,
+        logout,
+        refreshApartment: async (userId) => {
+          const id = userId || user?.id;
+          if (!id) return false;
+          return checkApartment(id);
+        },
+        refreshProfile: async (userId) => {
+          const id = userId || user?.id;
+          if (!id) return;
+          return loadProfile(id, user);
+        },
+      }}
+    >
       {!loading && children}
     </AuthContext.Provider>
   );

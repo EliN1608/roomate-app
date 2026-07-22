@@ -221,7 +221,6 @@ export async function cleanupApartment(apartmentId, userIds = []) {
   await admin.from('shopping_items').delete().eq('apartment_id', apartmentId);
   await admin.from('settlements').delete().eq('apartment_id', apartmentId);
   await admin.from('expenses').delete().eq('apartment_id', apartmentId);
-  await admin.from('balances').delete().eq('apartment_id', apartmentId);
   await admin.from('members').delete().eq('apartment_id', apartmentId);
   await admin.from('apartments').delete().eq('id', apartmentId);
 

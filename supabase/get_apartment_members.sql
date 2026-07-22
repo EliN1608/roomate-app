@@ -37,4 +37,6 @@ AS $$
     );
 $$;
 
+REVOKE ALL ON FUNCTION public.get_apartment_members(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.get_apartment_members(uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.get_apartment_members(uuid) TO authenticated;

@@ -43,6 +43,7 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.update_apartment_details(uuid, text, text, text, text, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.update_apartment_details(uuid, text, text, text, text, text) FROM anon;
 GRANT EXECUTE ON FUNCTION public.update_apartment_details(uuid, text, text, text, text, text) TO authenticated;
 
 -- ---------------------------------------------------------------------------
@@ -83,4 +84,5 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.update_apartment_shopping_settings(uuid, integer, boolean, text[]) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.update_apartment_shopping_settings(uuid, integer, boolean, text[]) FROM anon;
 GRANT EXECUTE ON FUNCTION public.update_apartment_shopping_settings(uuid, integer, boolean, text[]) TO authenticated;

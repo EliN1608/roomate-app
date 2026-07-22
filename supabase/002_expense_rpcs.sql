@@ -1,12 +1,14 @@
 -- Run in Supabase SQL Editor (safe to re-run).
 -- Atomic expense CRUD + settlement fix (settlements-only ledger).
--- Prerequisite: 001_core_rls_policies.sql, expenses_advanced_fields.sql, apartment_balances.sql
+-- Prerequisite: 001_core_rls_policies.sql, expenses_advanced_fields.sql,
+--               apartment_profiles_and_settlements.sql
 
 -- ---------------------------------------------------------------------------
 -- Lock down generate_recurring_expenses_for_month (cron / service_role only)
 -- ---------------------------------------------------------------------------
-REVOKE EXECUTE ON FUNCTION public.generate_recurring_expenses_for_month(date) FROM authenticated;
-REVOKE EXECUTE ON FUNCTION public.generate_recurring_expenses_for_month(date) FROM anon;
+REVOKE ALL ON FUNCTION public.generate_recurring_expenses_for_month(date) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.generate_recurring_expenses_for_month(date) FROM anon;
+REVOKE ALL ON FUNCTION public.generate_recurring_expenses_for_month(date) FROM authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Share validation helper
@@ -71,6 +73,8 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public._validate_expense_shares(uuid, numeric, jsonb) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public._validate_expense_shares(uuid, numeric, jsonb) FROM anon;
+REVOKE ALL ON FUNCTION public._validate_expense_shares(uuid, numeric, jsonb) FROM authenticated;
 
 -- ---------------------------------------------------------------------------
 -- create_expense — atomic insert expense + shares
@@ -158,6 +162,7 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.create_expense(uuid, uuid, text, numeric, date, text, boolean, text, jsonb) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.create_expense(uuid, uuid, text, numeric, date, text, boolean, text, jsonb) FROM anon;
 GRANT EXECUTE ON FUNCTION public.create_expense(uuid, uuid, text, numeric, date, text, boolean, text, jsonb) TO authenticated;
 
 -- ---------------------------------------------------------------------------
@@ -239,6 +244,7 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.update_expense(uuid, text, numeric, uuid, date, text, jsonb) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.update_expense(uuid, text, numeric, uuid, date, text, jsonb) FROM anon;
 GRANT EXECUTE ON FUNCTION public.update_expense(uuid, text, numeric, uuid, date, text, jsonb) TO authenticated;
 
 -- ---------------------------------------------------------------------------
@@ -264,6 +270,8 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.clear_settlements_if_no_expenses(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.clear_settlements_if_no_expenses(uuid) FROM anon;
+REVOKE ALL ON FUNCTION public.clear_settlements_if_no_expenses(uuid) FROM authenticated;
 
 -- ---------------------------------------------------------------------------
 -- delete_expense
@@ -301,6 +309,7 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.delete_expense(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.delete_expense(uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.delete_expense(uuid) TO authenticated;
 
 -- ---------------------------------------------------------------------------
@@ -359,4 +368,5 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.settle_with_member(uuid, uuid, numeric, boolean) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.settle_with_member(uuid, uuid, numeric, boolean) FROM anon;
 GRANT EXECUTE ON FUNCTION public.settle_with_member(uuid, uuid, numeric, boolean) TO authenticated;

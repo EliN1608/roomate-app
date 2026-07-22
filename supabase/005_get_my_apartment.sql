@@ -34,4 +34,5 @@ AS $$
 $$;
 
 REVOKE ALL ON FUNCTION public.get_my_apartment() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.get_my_apartment() FROM anon;
 GRANT EXECUTE ON FUNCTION public.get_my_apartment() TO authenticated;

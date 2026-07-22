@@ -1,6 +1,7 @@
 -- Run in Supabase SQL Editor (safe to re-run).
--- Core RLS for apartments, members, balances, expenses, shopping_items.
--- Prerequisite: base tables exist (apartments, members, expenses, balances, shopping_items).
+-- Core RLS for apartments, members, expenses, shopping_items.
+-- Prerequisite: base tables exist (apartments, members, expenses, shopping_items).
+-- Note: public.balances was dropped — see 008_optimize_rls_and_drop_balances.sql.
 -- Requires: public.is_apartment_admin(uuid) from profile_apartment_management.sql
 
 -- ---------------------------------------------------------------------------
@@ -22,6 +23,7 @@ AS $$
 $$;
 
 REVOKE ALL ON FUNCTION public.is_apartment_member(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.is_apartment_member(uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.is_apartment_member(uuid) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.apartment_exists(apt_id uuid)
@@ -39,6 +41,7 @@ AS $$
 $$;
 
 REVOKE ALL ON FUNCTION public.apartment_exists(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.apartment_exists(uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.apartment_exists(uuid) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.is_member_of_apartment(apt_id uuid, uid uuid)
@@ -57,6 +60,7 @@ AS $$
 $$;
 
 REVOKE ALL ON FUNCTION public.is_member_of_apartment(uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.is_member_of_apartment(uuid, uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.is_member_of_apartment(uuid, uuid) TO authenticated;
 
 -- Lookup apartment by invite code (join flow — avoids exposing all apartments)
@@ -74,6 +78,7 @@ AS $$
 $$;
 
 REVOKE ALL ON FUNCTION public.find_apartment_by_invite(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.find_apartment_by_invite(text) FROM anon;
 GRANT EXECUTE ON FUNCTION public.find_apartment_by_invite(text) TO authenticated;
 
 -- ---------------------------------------------------------------------------
@@ -120,16 +125,6 @@ CREATE POLICY members_insert_self ON public.members
   );
 
 -- UPDATE/DELETE only via RPCs (leave_apartment, remove_apartment_member, transfer_apartment_admin)
-
--- ---------------------------------------------------------------------------
--- balances — no direct client access (display uses expense_shares + settlements)
--- ---------------------------------------------------------------------------
-ALTER TABLE public.balances ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS balances_select_members ON public.balances;
-DROP POLICY IF EXISTS balances_insert_members ON public.balances;
-DROP POLICY IF EXISTS balances_update_members ON public.balances;
-DROP POLICY IF EXISTS balances_delete_members ON public.balances;
 
 -- ---------------------------------------------------------------------------
 -- expenses — SELECT + INSERT (RPCs preferred; policies are defense in depth)

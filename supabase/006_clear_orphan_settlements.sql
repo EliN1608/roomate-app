@@ -21,6 +21,8 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.clear_settlements_if_no_expenses(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.clear_settlements_if_no_expenses(uuid) FROM anon;
+REVOKE ALL ON FUNCTION public.clear_settlements_if_no_expenses(uuid) FROM authenticated;
 
 -- delete_expense — also clears settlements when last expense is removed
 CREATE OR REPLACE FUNCTION public.delete_expense(p_expense_id uuid)
@@ -56,6 +58,7 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.delete_expense(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.delete_expense(uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.delete_expense(uuid) TO authenticated;
 
 -- One-time cleanup for apartments that already have orphan settlement rows

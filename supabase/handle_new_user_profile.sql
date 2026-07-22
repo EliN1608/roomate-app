@@ -79,6 +79,10 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
 
+REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.handle_new_user() FROM anon;
+REVOKE ALL ON FUNCTION public.handle_new_user() FROM authenticated;
+
 -- ---------------------------------------------------------------------------
 -- Backfill: existing auth users missing a profiles row
 -- (fixes "שותף ללא שם" for users who signed up before this trigger)

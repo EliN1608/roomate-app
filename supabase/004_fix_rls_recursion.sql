@@ -21,6 +21,7 @@ AS $$
 $$;
 
 REVOKE ALL ON FUNCTION public.is_apartment_member(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.is_apartment_member(uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.is_apartment_member(uuid) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.apartment_exists(apt_id uuid)
@@ -38,6 +39,7 @@ AS $$
 $$;
 
 REVOKE ALL ON FUNCTION public.apartment_exists(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.apartment_exists(uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.apartment_exists(uuid) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.is_member_of_apartment(apt_id uuid, uid uuid)
@@ -56,6 +58,7 @@ AS $$
 $$;
 
 REVOKE ALL ON FUNCTION public.is_member_of_apartment(uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.is_member_of_apartment(uuid, uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.is_member_of_apartment(uuid, uuid) TO authenticated;
 
 -- ---------------------------------------------------------------------------

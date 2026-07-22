@@ -120,6 +120,7 @@ AS $$
 $$;
 
 REVOKE ALL ON FUNCTION public.is_apartment_admin(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.is_apartment_admin(uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.is_apartment_admin(uuid) TO authenticated;
 
 -- ---------------------------------------------------------------------------
@@ -170,10 +171,6 @@ BEGIN
   WHERE s.apartment_id = apt_id
     AND (s.from_user = v_uid OR s.to_user = v_uid);
 
-  DELETE FROM public.balances b
-  WHERE b.apartment_id = apt_id
-    AND b.user_id = v_uid;
-
   DELETE FROM public.members
   WHERE apartment_id = apt_id
     AND user_id = v_uid;
@@ -181,6 +178,7 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.leave_apartment(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.leave_apartment(uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.leave_apartment(uuid) TO authenticated;
 
 -- ---------------------------------------------------------------------------
@@ -236,10 +234,6 @@ BEGIN
   WHERE s.apartment_id = apt_id
     AND (s.from_user = target_user_id OR s.to_user = target_user_id);
 
-  DELETE FROM public.balances b
-  WHERE b.apartment_id = apt_id
-    AND b.user_id = target_user_id;
-
   DELETE FROM public.members
   WHERE apartment_id = apt_id
     AND user_id = target_user_id;
@@ -247,6 +241,7 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.remove_apartment_member(uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.remove_apartment_member(uuid, uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.remove_apartment_member(uuid, uuid) TO authenticated;
 
 -- ---------------------------------------------------------------------------
@@ -298,6 +293,7 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.transfer_apartment_admin(uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.transfer_apartment_admin(uuid, uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.transfer_apartment_admin(uuid, uuid) TO authenticated;
 
 -- ---------------------------------------------------------------------------
@@ -357,4 +353,5 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.regenerate_invite_code(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.regenerate_invite_code(uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.regenerate_invite_code(uuid) TO authenticated;

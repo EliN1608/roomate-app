@@ -2,7 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import Toast from '../components/Toast/Toast';
 import './LoginPage.css';
+
+const ERROR_TOAST_MS = 3500;
 
 export default function LoginPage() {
   const { refreshApartment, isLoggedIn, hasApartment } = useAuth();
@@ -14,7 +17,16 @@ export default function LoginPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [registerSuccess, setRegisterSuccess] = useState(null);
+  const [toast, setToast] = useState({ open: false, message: '', type: 'error' });
   const holdOnRegisterRef = useRef(false);
+
+  const showToast = (message, type = 'error') => {
+    setToast({ open: true, message, type });
+  };
+
+  const handleToastClose = () => {
+    setToast((prev) => ({ ...prev, open: false }));
+  };
 
   // Form states
   const [email, setEmail] = useState('');
@@ -56,7 +68,12 @@ export default function LoginPage() {
       if (signInError) throw signInError;
       await navigateAfterAuth(data.user.id);
     } catch (err) {
-      setError('אימייל או סיסמה שגויים');
+      const msg = `${err?.message || ''}`.toLowerCase();
+      if (/confirm|not confirmed/.test(msg)) {
+        showToast('יש לאשר את האימייל לפני ההתחברות', 'error');
+      } else {
+        showToast('אימייל או סיסמה שגויים', 'error');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -402,6 +419,14 @@ export default function LoginPage() {
         </div>
         )}
       </main>
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        type={toast.type}
+        duration={ERROR_TOAST_MS}
+        onClose={handleToastClose}
+      />
     </div>
   );
 }

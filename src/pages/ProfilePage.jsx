@@ -2,9 +2,14 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
-import Badge from '../components/Badge/Badge';
 import Toast from '../components/Toast/Toast';
-import { IconDotsVertical, IconEdit } from '../components/icons/TablerIcons';
+import AvatarUpload from '../components/Profile/AvatarUpload';
+import BalanceSummaryCard from '../components/Profile/BalanceSummaryCard';
+import ApartmentDetailsCard from '../components/Profile/ApartmentDetailsCard';
+import MembersManagement from '../components/Profile/MembersManagement';
+import ProfileActionsCard from '../components/Profile/ProfileActionsCard';
+import ApartmentDetailsForm from '../components/Profile/ApartmentDetailsForm';
+import ConfirmModal from '../components/Profile/ConfirmModal';
 import { rpcUpdateApartmentDetails } from '../lib/apartmentApi';
 import { fetchMyOpenBalance } from '../lib/openBalance';
 import { EPS } from '../lib/balances';
@@ -503,423 +508,102 @@ export default function ProfilePage() {
         ? 'אתה חייב לשותפים'
         : 'המאזן מאוזן';
 
+  const balanceDisplay =
+    Math.abs(Number(balance)) < EPS
+      ? '₪0.00'
+      : `${balance > 0 ? '+' : '-'}₪${Math.abs(Number(balance)).toFixed(2)}`;
+
+  const handleToggleMemberMenu = (memberUserId) => {
+    setMemberMenuId((prev) => (prev === memberUserId ? null : memberUserId));
+  };
+
   return (
     <div className="profile-page-wrapper">
       <h1 className="profile-page-title">פרופיל</h1>
 
-      {/* 1. Personal details */}
-      <section className="profile-card user-card">
-        <div className="user-card-content">
-          <button
-            type="button"
-            className="user-avatar-btn"
-            onClick={handleAvatarClick}
-            disabled={uploadingAvatar}
-            aria-label="העלאת תמונת פרופיל"
-          >
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="user-avatar-img" />
-            ) : (
-              <span className="user-avatar">{initials}</span>
-            )}
-            <span className="user-avatar-hint">
-              {uploadingAvatar ? 'מעלה…' : 'שנה'}
-            </span>
-          </button>
-          <input
-            ref={avatarInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            className="visually-hidden"
-            onChange={handleAvatarChange}
-          />
+      <AvatarUpload
+        avatarInputRef={avatarInputRef}
+        avatarUrl={avatarUrl}
+        initials={initials}
+        fullName={fullName}
+        uploadingAvatar={uploadingAvatar}
+        isEditingName={isEditingName}
+        nameDraft={nameDraft}
+        savingName={savingName}
+        userEmail={user?.email}
+        userRole={userRole}
+        onAvatarClick={handleAvatarClick}
+        onAvatarChange={handleAvatarChange}
+        onNameDraftChange={setNameDraft}
+        onSaveName={handleSaveName}
+        onCancelEditName={() => setIsEditingName(false)}
+        onStartEditName={handleStartEditName}
+      />
 
-          <div className="user-info">
-            {isEditingName ? (
-              <div className="name-edit-row">
-                <input
-                  className="name-edit-input"
-                  value={nameDraft}
-                  onChange={(e) => setNameDraft(e.target.value)}
-                  maxLength={80}
-                  autoFocus
-                  aria-label="שם תצוגה"
-                />
-                <button
-                  type="button"
-                  className="name-edit-save"
-                  onClick={handleSaveName}
-                  disabled={savingName}
-                >
-                  {savingName ? '…' : 'שמור'}
-                </button>
-                <button
-                  type="button"
-                  className="name-edit-cancel"
-                  onClick={() => setIsEditingName(false)}
-                  disabled={savingName}
-                >
-                  ביטול
-                </button>
-              </div>
-            ) : (
-              <div className="name-display-row">
-                <h2 className="user-name">{fullName}</h2>
-                <button
-                  type="button"
-                  className="name-edit-trigger"
-                  onClick={handleStartEditName}
-                  aria-label="עריכת שם תצוגה"
-                >
-                  <IconEdit size={16} />
-                </button>
-              </div>
-            )}
-            <p className="user-email">{user?.email || ''}</p>
-            <Badge className="user-role-badge-slot">
-              {userRole === 'admin' ? 'מנהל דירה' : 'שותף/ה'}
-            </Badge>
-          </div>
-        </div>
-      </section>
-
-      {/* 2. Personal balance */}
       {apartmentId && (
-        <section className="profile-card balance-summary-card">
-          <div className="balance-summary-top">
-            <h2 className="card-title">המאזן האישי שלי</h2>
-            <button
-              type="button"
-              className="balance-dashboard-link"
-              onClick={() => navigate('/dashboard')}
-            >
-              לדשבורד
-            </button>
-          </div>
-          <p className="balance-summary-amount" style={{ color: balanceColor }}>
-            {Math.abs(Number(balance)) < EPS
-              ? '₪0.00'
-              : `${balance > 0 ? '+' : '-'}₪${Math.abs(Number(balance)).toFixed(2)}`}
-          </p>
-          <p className="balance-summary-subtitle">{balanceSubtitle}</p>
-        </section>
+        <BalanceSummaryCard
+          balance={balanceDisplay}
+          balanceColor={balanceColor}
+          balanceSubtitle={balanceSubtitle}
+          onNavigateDashboard={() => navigate('/dashboard')}
+        />
       )}
 
-      {/* 3. Apartment details */}
       {apartmentId && (
-        <section className="profile-card apartment-card">
-          <div className="card-header-row">
-            <h2 className="card-title">פרטי הדירה</h2>
-            {userRole === 'admin' && (
-              <button
-                type="button"
-                className="edit-apartment-btn"
-                onClick={handleOpenEdit}
-              >
-                עריכה
-              </button>
-            )}
-          </div>
-
-          <div className="info-row">
-            <span className="info-label">שם הדירה</span>
-            <span className="info-value">
-              {apartmentData?.name || 'לא מוגדר'}
-            </span>
-          </div>
-
-          <div className="info-row">
-            <span className="info-label">כתובת הדירה</span>
-            <span className="info-value">
-              {apartmentData
-                ? [
-                    `${apartmentData.street || ''} ${apartmentData.building_number || ''}`.trim(),
-                    apartmentData.apartment_number
-                      ? `דירה ${apartmentData.apartment_number}`
-                      : '',
-                    apartmentData.city || '',
-                  ]
-                    .filter(Boolean)
-                    .join(', ') || 'לא מוגדר'
-                : 'לא מוגדר'}
-            </span>
-          </div>
-
-          <div className="info-row">
-            <span className="info-label">מספר שותפים</span>
-            <span className="info-value">{membersCount} שותפים</span>
-          </div>
-
-          <div className="info-row no-border invite-row">
-            <span className="info-label">קוד הזמנה</span>
-            <div className="invite-actions">
-              <Badge variant="code">
-                {apartmentData?.invite_code || 'לא מוגדר'}
-              </Badge>
-              <button
-                type="button"
-                className="invite-action-btn"
-                onClick={handleCopyInviteCode}
-              >
-                העתק
-              </button>
-              {userRole === 'admin' && (
-                <button
-                  type="button"
-                  className="invite-action-btn"
-                  onClick={openRegenerateModal}
-                >
-                  חדש
-                </button>
-              )}
-            </div>
-          </div>
-        </section>
+        <ApartmentDetailsCard
+          apartmentData={apartmentData}
+          membersCount={membersCount}
+          userRole={userRole}
+          onOpenEdit={handleOpenEdit}
+          onCopyInviteCode={handleCopyInviteCode}
+          onRegenerateInviteCode={openRegenerateModal}
+        />
       )}
 
-      {/* 4. Roommates */}
       {apartmentId && (
-        <section className="profile-card roommates-card">
-          <h3 className="card-section-header">חברי הדירה</h3>
-          {members.length === 0 ? (
-            <p className="roommates-empty">אין חברים להצגה</p>
-          ) : (
-            members.map((member, idx) => {
-              const isSelf = member.user_id === user?.id;
-              const isAdminMember = member.role === 'admin';
-              return (
-                <div
-                  key={member.user_id}
-                  className={`roommate-row ${idx === members.length - 1 ? 'no-border' : ''}`}
-                >
-                  <div className="roommate-left">
-                    <div
-                      className={`roommate-avatar ${isAdminMember ? 'bg-dark' : 'bg-lime'}`}
-                    >
-                      {member.avatar_url ? (
-                        <img
-                          src={member.avatar_url}
-                          alt=""
-                          className="roommate-avatar-img"
-                        />
-                      ) : (
-                        roommateInitials(member)
-                      )}
-                    </div>
-                    <div className="roommate-text">
-                      <span className="roommate-name">
-                        {roommateDisplayName(member)}
-                      </span>
-                      {isSelf && <span className="self-badge">את/ה</span>}
-                    </div>
-                  </div>
-                  <div className="roommate-right">
-                    <Badge>
-                      {isAdminMember ? 'מנהל' : 'שותף/ה'}
-                    </Badge>
-                    {userRole === 'admin' && !isSelf && (
-                      <div
-                        className="roommate-menu"
-                        data-member-menu={member.user_id}
-                      >
-                        <button
-                          type="button"
-                          className="roommate-menu-trigger"
-                          aria-label={`פעולות עבור ${roommateDisplayName(member)}`}
-                          aria-haspopup="menu"
-                          aria-expanded={memberMenuId === member.user_id}
-                          onClick={() =>
-                            setMemberMenuId((prev) =>
-                              prev === member.user_id ? null : member.user_id
-                            )
-                          }
-                        >
-                          <IconDotsVertical size={18} />
-                        </button>
-                        {memberMenuId === member.user_id && (
-                          <div className="roommate-menu-dropdown" role="menu">
-                            {!isAdminMember && (
-                              <button
-                                type="button"
-                                className="roommate-menu-item"
-                                role="menuitem"
-                                onClick={() => openTransferModal(member)}
-                              >
-                                הפוך למנהל
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              className="roommate-menu-item roommate-menu-item-danger"
-                              role="menuitem"
-                              onClick={() => openRemoveModal(member)}
-                            >
-                              הסר מהדירה
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </section>
+        <MembersManagement
+          members={members}
+          userRole={userRole}
+          currentUserId={user?.id}
+          memberMenuId={memberMenuId}
+          roommateDisplayName={roommateDisplayName}
+          roommateInitials={roommateInitials}
+          onToggleMemberMenu={handleToggleMemberMenu}
+          onTransferAdmin={openTransferModal}
+          onRemoveMember={openRemoveModal}
+        />
       )}
 
-      {/* 5. Actions */}
-      <section className="profile-card actions-card">
-        <h3 className="card-section-header">פעולות</h3>
-        <div className="actions-buttons-container">
-          <button
-            type="button"
-            className="action-btn change-password-btn"
-            onClick={handlePasswordChange}
-          >
-            שינוי סיסמה
-          </button>
-          {apartmentId && (
-            <button
-              type="button"
-              className="action-btn leave-apartment-btn"
-              onClick={openLeaveModal}
-            >
-              עזוב דירה
-            </button>
-          )}
-          <button
-            type="button"
-            className="action-btn logout-btn"
-            onClick={handleLogout}
-          >
-            התנתקות
-          </button>
-        </div>
-      </section>
+      <ProfileActionsCard
+        hasApartment={!!apartmentId}
+        onPasswordChange={handlePasswordChange}
+        onLeaveApartment={openLeaveModal}
+        onLogout={handleLogout}
+      />
 
-      {/* Edit apartment modal */}
       {isEditingApartment && (
-        <div
-          className="modal-overlay"
-          onClick={() => setIsEditingApartment(false)}
-          role="presentation"
-        >
-          <div
-            className="modal-card"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="edit-apt-title"
-          >
-            <h2 id="edit-apt-title" className="modal-title">
-              עריכת פרטי דירה
-            </h2>
-
-            <div className="modal-field">
-              <label htmlFor="edit-apt-name">שם הדירה</label>
-              <input
-                id="edit-apt-name"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-              />
-            </div>
-            <div className="modal-field">
-              <label htmlFor="edit-apt-city">עיר</label>
-              <input
-                id="edit-apt-city"
-                value={editCity}
-                onChange={(e) => setEditCity(e.target.value)}
-              />
-            </div>
-            <div className="modal-field">
-              <label htmlFor="edit-apt-street">רחוב</label>
-              <input
-                id="edit-apt-street"
-                value={editStreet}
-                onChange={(e) => setEditStreet(e.target.value)}
-              />
-            </div>
-            <div className="modal-field">
-              <label htmlFor="edit-apt-building">מספר בניין</label>
-              <input
-                id="edit-apt-building"
-                value={editBuilding}
-                onChange={(e) => setEditBuilding(e.target.value)}
-              />
-            </div>
-            <div className="modal-field">
-              <label htmlFor="edit-apt-num">מספר דירה</label>
-              <input
-                id="edit-apt-num"
-                value={editApartmentNum}
-                onChange={(e) => setEditApartmentNum(e.target.value)}
-              />
-            </div>
-
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="modal-save-btn"
-                onClick={handleSaveApartment}
-              >
-                שמור שינויים
-              </button>
-              <button
-                type="button"
-                className="modal-cancel-btn"
-                onClick={() => setIsEditingApartment(false)}
-              >
-                ביטול
-              </button>
-            </div>
-          </div>
-        </div>
+        <ApartmentDetailsForm
+          editName={editName}
+          editCity={editCity}
+          editStreet={editStreet}
+          editBuilding={editBuilding}
+          editApartmentNum={editApartmentNum}
+          onEditNameChange={setEditName}
+          onEditCityChange={setEditCity}
+          onEditStreetChange={setEditStreet}
+          onEditBuildingChange={setEditBuilding}
+          onEditApartmentNumChange={setEditApartmentNum}
+          onSave={handleSaveApartment}
+          onCancel={() => setIsEditingApartment(false)}
+        />
       )}
 
-      {/* Confirm modal */}
-      {confirmModal && (
-        <div
-          className="modal-overlay"
-          onClick={() => !actionBusy && setConfirmModal(null)}
-          role="presentation"
-        >
-          <div
-            className="modal-card"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="confirm-modal-title"
-          >
-            <h2 id="confirm-modal-title" className="modal-title">
-              {confirmModal.title}
-            </h2>
-            <p className="modal-body-text">{confirmModal.body}</p>
-            <div className="modal-actions">
-              <button
-                type="button"
-                className={
-                  confirmModal.danger
-                    ? 'modal-danger-btn'
-                    : 'modal-save-btn'
-                }
-                onClick={handleConfirmModal}
-                disabled={actionBusy}
-              >
-                {actionBusy ? 'מבצע…' : confirmModal.confirmLabel}
-              </button>
-              <button
-                type="button"
-                className="modal-cancel-btn"
-                onClick={() => setConfirmModal(null)}
-                disabled={actionBusy}
-              >
-                ביטול
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        confirmModal={confirmModal}
+        actionBusy={actionBusy}
+        onConfirm={handleConfirmModal}
+        onCancel={() => setConfirmModal(null)}
+      />
 
       <Toast
         open={toast.open}

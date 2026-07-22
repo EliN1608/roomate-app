@@ -224,7 +224,20 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (!error) return;
+
+      // Session already invalid on the server — local sign-out still succeeded.
+      const status = Number(error.status ?? error.statusCode);
+      if (status === 401 || status === 403) return;
+
+      throw error;
+    } catch (err) {
+      const status = Number(err?.status ?? err?.statusCode);
+      if (status === 401 || status === 403) return;
+      throw err;
+    }
   };
 
   return (

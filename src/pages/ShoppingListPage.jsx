@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useAuth } from '../context/AuthContext';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useAuth } from '../context/useAuth';
 import { supabase } from '../lib/supabase';
 import { rpcUpdateApartmentShoppingSettings } from '../lib/apartmentApi';
 import {
@@ -71,25 +71,28 @@ export default function ShoppingListPage() {
     setDoneItems(normalized.filter((i) => i.is_done));
   };
 
-  const runAutoCleanup = async (days, enabled = true) => {
-    if (!apartmentId || !featuresSupported || !enabled) return 0;
-    const cutoff = cleanupCutoffIso(days);
-    const { data, error } = await supabase
-      .from('shopping_items')
-      .delete()
-      .eq('apartment_id', apartmentId)
-      .eq('is_done', true)
-      .lt('completed_at', cutoff)
-      .select('id');
-    if (error) {
-      if (isMissingColumnError(error, 'completed_at')) return 0;
-      console.error('Cleanup error:', error);
-      return 0;
-    }
-    return (data || []).length;
-  };
+  const runAutoCleanup = useCallback(
+    async (days, enabled = true) => {
+      if (!apartmentId || !featuresSupported || !enabled) return 0;
+      const cutoff = cleanupCutoffIso(days);
+      const { data, error } = await supabase
+        .from('shopping_items')
+        .delete()
+        .eq('apartment_id', apartmentId)
+        .eq('is_done', true)
+        .lt('completed_at', cutoff)
+        .select('id');
+      if (error) {
+        if (isMissingColumnError(error, 'completed_at')) return 0;
+        console.error('Cleanup error:', error);
+        return 0;
+      }
+      return (data || []).length;
+    },
+    [apartmentId, featuresSupported]
+  );
 
-  const fetchApartmentSettings = async () => {
+  const fetchApartmentSettings = useCallback(async () => {
     const defaults = {
       days: 7,
       enabled: true,
@@ -137,7 +140,7 @@ export default function ShoppingListPage() {
         ? normalizeCategoryList(data.shopping_categories)
         : DEFAULT_SHOPPING_CATEGORIES,
     };
-  };
+  }, [apartmentId]);
 
   const ensureCategorySaved = async (rawName) => {
     const cat = normalizeCategory(rawName);
@@ -159,7 +162,7 @@ export default function ShoppingListPage() {
     return ensureCategorySaved(selected);
   };
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     if (!apartmentId) {
       setLoading(false);
       return;
@@ -228,11 +231,11 @@ export default function ShoppingListPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [apartmentId, fetchApartmentSettings, runAutoCleanup]);
 
   useEffect(() => {
     fetchItems();
-  }, [apartmentId]);
+  }, [fetchItems]);
 
   const persistSortOrder = async (orderedItems) => {
     if (!sortOrderSupported) return;

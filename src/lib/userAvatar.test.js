@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getInitials } from '../components/UserAvatar.jsx';
+import { getInitials } from './textUtils.js';
 
 describe('getInitials', () => {
   it('returns two letters from a full name', () => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { supabase } from '../lib/supabase';
 import Toast from '../components/Toast/Toast';
 import './LoginPage.css';
@@ -121,7 +121,8 @@ export default function LoginPage() {
       });
     } catch (err) {
       holdOnRegisterRef.current = false;
-      setError('ההרשמה נכשלה');
+      console.error('Register failed:', err);
+      setError(err?.message ? `ההרשמה נכשלה: ${err.message}` : 'ההרשמה נכשלה');
     } finally {
       setSubmitting(false);
     }

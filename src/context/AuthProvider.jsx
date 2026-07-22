@@ -1,7 +1,6 @@
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-
-export const AuthContext = createContext();
+import { AuthContext } from './AuthContext';
 
 function AuthBootScreen() {
   return (
@@ -277,6 +276,3 @@ export function AuthProvider({ children }) {
   );
 }
 
-export function useAuth() {
-  return useContext(AuthContext);
-}

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './Toast.css';
 
 const EXIT_MS = 220;
@@ -19,19 +19,19 @@ export default function Toast({
   const exitTimer = useRef(null);
   const autoTimer = useRef(null);
 
-  const clearTimers = () => {
+  const clearTimers = useCallback(() => {
     if (exitTimer.current) clearTimeout(exitTimer.current);
     if (autoTimer.current) clearTimeout(autoTimer.current);
-  };
+  }, []);
 
-  const beginClose = () => {
+  const beginClose = useCallback(() => {
     setExiting(true);
     exitTimer.current = setTimeout(() => {
       setVisible(false);
       setExiting(false);
       onClose?.();
     }, EXIT_MS);
-  };
+  }, [onClose]);
 
   useEffect(() => {
     clearTimers();
@@ -48,7 +48,7 @@ export default function Toast({
     }
 
     return clearTimers;
-  }, [open, message, duration]);
+  }, [open, message, duration, beginClose, clearTimers]);
 
   if (!visible || !message) return null;
 

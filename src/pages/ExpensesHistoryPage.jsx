@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IconEdit, IconTrash, IconPlus } from '../components/icons/TablerIcons';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { supabase } from '../lib/supabase';
 import { formatLocalDate, currentMonthKey, monthDateRange, formatMonthLabel } from '../lib/dates';
 import {
@@ -69,7 +69,7 @@ export default function ExpensesHistoryPage() {
   const monthMenuRef = useRef(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const fetchMonthOptions = async () => {
+  const fetchMonthOptions = useCallback(async () => {
     if (!apartmentId) {
       setMonthOptions([]);
       return;
@@ -96,9 +96,9 @@ export default function ExpensesHistoryPage() {
     keys.add(currentMonthKey());
 
     setMonthOptions(Array.from(keys).sort((a, b) => b.localeCompare(a)));
-  };
+  }, [apartmentId]);
 
-  const fetchExpenses = async () => {
+  const fetchExpenses = useCallback(async () => {
     if (!apartmentId || !user?.id) {
       setExpenses([]);
       setLoading(false);
@@ -139,15 +139,15 @@ export default function ExpensesHistoryPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [apartmentId, user?.id, filter, monthKey]);
 
   useEffect(() => {
     fetchMonthOptions();
-  }, [apartmentId, user?.id]);
+  }, [fetchMonthOptions]);
 
   useEffect(() => {
     fetchExpenses();
-  }, [apartmentId, user?.id, filter, monthKey]);
+  }, [fetchExpenses]);
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);

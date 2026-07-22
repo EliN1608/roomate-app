@@ -1,11 +1,4 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import {
-  IconChecks,
-  IconTrash,
-  IconCheck,
-  IconEdit,
-  IconSearch,
-} from '../components/icons/TablerIcons';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { rpcUpdateApartmentShoppingSettings } from '../lib/apartmentApi';
@@ -14,271 +7,24 @@ import {
   NEW_CATEGORY_OPTION,
   normalizeCategory,
   normalizeCategoryList,
-  categoryLabel,
   filterShoppingItems,
-  groupItemsByCategory,
   cleanupCutoffIso,
 } from '../lib/shopping';
+import AddItemForm from '../components/ShoppingList/AddItemForm';
+import BulkActionsBar from '../components/ShoppingList/BulkActionsBar';
+import BulkConfirmModal from '../components/ShoppingList/BulkConfirmModal';
+import BulkDeleteModal from '../components/ShoppingList/BulkDeleteModal';
+import CategoryGroupedLists from '../components/ShoppingList/CategoryGroupedLists';
+import EditItemModal from '../components/ShoppingList/EditItemModal';
+import SortableList from '../components/ShoppingList/SortableList';
+import {
+  SELECT_FULL,
+  SELECT_BASIC,
+  isMissingColumnError,
+  normalizeItems,
+  rebuildFullList,
+} from '../components/ShoppingList/shoppingListHelpers';
 import './ShoppingListPage.css';
-
-const SELECT_FULL =
-  'id, name, quantity, category, is_done, added_by, created_at, sort_order, completed_at';
-const SELECT_BASIC = 'id, name, is_done, added_by, created_at, sort_order';
-
-function isMissingColumnError(err, column) {
-  const msg = `${err?.message || ''} ${err?.details || ''} ${err?.hint || ''}`;
-  return new RegExp(column, 'i').test(msg);
-}
-
-function normalizeItems(rows) {
-  return (rows || []).map((row, index) => ({
-    ...row,
-    id: String(row.id),
-    quantity: row.quantity || '',
-    category: normalizeCategory(row.category),
-    sort_order:
-      row.sort_order == null || Number.isNaN(Number(row.sort_order))
-        ? index
-        : Number(row.sort_order),
-  }));
-}
-
-function arrayMove(list, from, to) {
-  const next = list.slice();
-  const [item] = next.splice(from, 1);
-  next.splice(to, 0, item);
-  return next;
-}
-
-function SortableList({
-  items,
-  isDone,
-  userId,
-  onToggle,
-  onEdit,
-  onLiveReorder,
-  onPersist,
-  disableDrag = false,
-}) {
-  const [draggingId, setDraggingId] = useState(null);
-  const dragIdRef = useRef(null);
-  const listRef = useRef(null);
-  const itemsRef = useRef(items);
-  itemsRef.current = items;
-
-  const endDrag = () => {
-    const id = dragIdRef.current;
-    dragIdRef.current = null;
-    setDraggingId(null);
-    if (id) onPersist(itemsRef.current);
-  };
-
-  const onHandlePointerDown = (e, itemId) => {
-    if (disableDrag) return;
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    e.preventDefault();
-    e.currentTarget.setPointerCapture(e.pointerId);
-    dragIdRef.current = itemId;
-    setDraggingId(itemId);
-  };
-
-  const onHandlePointerMove = (e) => {
-    const dragging = dragIdRef.current;
-    if (!dragging || !listRef.current) return;
-
-    const el = document.elementFromPoint(e.clientX, e.clientY);
-    const row = el?.closest?.('[data-shopping-id]');
-    if (!row) return;
-    const overId = row.getAttribute('data-shopping-id');
-    if (!overId || overId === dragging) return;
-
-    const current = itemsRef.current;
-    const from = current.findIndex((i) => i.id === dragging);
-    const to = current.findIndex((i) => i.id === overId);
-    if (from < 0 || to < 0 || from === to) return;
-
-    onLiveReorder(arrayMove(current, from, to));
-  };
-
-  const onHandlePointerUp = (e) => {
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {
-      /* already released */
-    }
-    endDrag();
-  };
-
-  if (items.length === 0) return null;
-
-  return (
-    <div className="items-list" ref={listRef}>
-      {items.map((item) => {
-        const isDragging = draggingId === item.id;
-        return (
-          <div
-            key={item.id}
-            data-shopping-id={item.id}
-            className={`${isDone ? 'done-item-card' : 'todo-item-card'}${
-              isDragging ? ' is-dragging' : ''
-            }`}
-          >
-            <button
-              type="button"
-              className={
-                isDone ? 'checkbox-btn-checked' : 'checkbox-btn-unchecked'
-              }
-              onClick={() => onToggle(item.id)}
-              aria-label={isDone ? 'בטל סימון כנקנה' : 'סמן כנקנה'}
-            >
-              {isDone ? '✓' : null}
-            </button>
-
-            <div className="item-details">
-              <div className={isDone ? 'item-name-done' : 'item-name-todo'}>
-                {item.name}
-                {item.quantity ? (
-                  <span className="item-quantity"> · {item.quantity}</span>
-                ) : null}
-              </div>
-              {!isDone && (
-                <div className="item-added-by">
-                  {categoryLabel(item.category)}
-                  {' · '}
-                  נוסף על ידי {item.added_by === userId ? 'אני' : 'שותף'}
-                </div>
-              )}
-              {isDone && item.quantity ? (
-                <div className="item-meta-done">{item.quantity}</div>
-              ) : null}
-            </div>
-
-            <div className="item-actions">
-              <button
-                type="button"
-                className="item-action-btn"
-                onClick={() => onEdit(item)}
-                aria-label="ערוך"
-                title="ערוך"
-              >
-                <IconEdit size={16} stroke={1.75} aria-hidden="true" />
-              </button>
-            </div>
-
-            {!disableDrag && (
-              <button
-                type="button"
-                className={`drag-handle${isDone ? ' done-drag' : ''}`}
-                aria-label="גרור לסידור מחדש"
-                onPointerDown={(e) => onHandlePointerDown(e, item.id)}
-                onPointerMove={onHandlePointerMove}
-                onPointerUp={onHandlePointerUp}
-                onPointerCancel={onHandlePointerUp}
-              >
-                ⠿
-              </button>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function CategoryGroupedLists({
-  items,
-  isDone,
-  userId,
-  categoryOrder,
-  onToggle,
-  onEdit,
-  onLiveGroupReorder,
-  onPersistGroup,
-}) {
-  const groups = useMemo(
-    () => groupItemsByCategory(items, categoryOrder),
-    [items, categoryOrder]
-  );
-
-  return (
-    <div className="category-groups">
-      {groups.map((group) => (
-        <div key={group.category} className="category-group">
-          <h3 className="category-heading">{group.label}</h3>
-          <SortableList
-            items={group.items}
-            isDone={isDone}
-            userId={userId}
-            onToggle={onToggle}
-            onEdit={onEdit}
-            onLiveReorder={(nextGroup) =>
-              onLiveGroupReorder(group.category, nextGroup)
-            }
-            onPersist={(nextGroup) => onPersistGroup(group.category, nextGroup)}
-          />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function rebuildFullList(allItems, category, nextGroupItems, categoryOrder) {
-  const groups = groupItemsByCategory(allItems, categoryOrder);
-  const rebuilt = [];
-  groups.forEach((g) => {
-    if (g.category === category) rebuilt.push(...nextGroupItems);
-    else rebuilt.push(...g.items);
-  });
-  return rebuilt;
-}
-
-function CategorySelect({
-  id,
-  className,
-  categories,
-  value,
-  onChange,
-  disabled,
-  newValue,
-  onNewValueChange,
-}) {
-  const showNew = value === NEW_CATEGORY_OPTION;
-  const options =
-    !showNew && value && !categories.includes(value)
-      ? [...categories, value]
-      : categories;
-
-  return (
-    <div className="category-select-wrap">
-      <select
-        id={id}
-        className={className}
-        value={value}
-        onChange={onChange}
-        disabled={disabled}
-        aria-label="קטגוריה"
-      >
-        {options.map((c) => (
-          <option key={c} value={c}>
-            {c}
-          </option>
-        ))}
-        <option value={NEW_CATEGORY_OPTION}>＋ קטגוריה חדשה</option>
-      </select>
-      {showNew && (
-        <input
-          type="text"
-          className={className}
-          placeholder="שם קטגוריה חדשה"
-          value={newValue}
-          onChange={onNewValueChange}
-          disabled={disabled}
-          aria-label="שם קטגוריה חדשה"
-        />
-      )}
-    </div>
-  );
-}
 
 export default function ShoppingListPage() {
   const { user, apartmentId } = useAuth();
@@ -870,159 +616,34 @@ export default function ShoppingListPage() {
         </div>
       )}
 
-      <form className="add-item-form" onSubmit={handleAddItem}>
-        <div className="add-item-bar">
-          <input
-            type="text"
-            className="add-item-input"
-            placeholder="למשל: חלב, ביצים..."
-            value={inputVal}
-            onChange={(e) => setInputVal(e.target.value)}
-            aria-label="שם פריט"
-          />
-          <button
-            type="submit"
-            className="add-item-btn"
-            aria-label="הוסף פריט"
-            title="הוסף"
-          >
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              aria-hidden="true"
-            >
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-          </button>
-        </div>
-        <div className="add-item-extras">
-          <CategorySelect
-            className="add-item-category"
-            categories={apartmentCategories}
-            value={categoryVal}
-            onChange={(e) => setCategoryVal(e.target.value)}
-            disabled={!featuresSupported}
-            newValue={newCategoryVal}
-            onNewValueChange={(e) => setNewCategoryVal(e.target.value)}
-          />
-          <input
-            type="number"
-            min="0"
-            step="1"
-            className="add-item-qty"
-            placeholder="כמות"
-            value={quantityVal}
-            onChange={(e) => setQuantityVal(e.target.value)}
-            disabled={!featuresSupported}
-            aria-label="כמות"
-          />
-        </div>
-      </form>
+      <AddItemForm
+        inputVal={inputVal}
+        setInputVal={setInputVal}
+        quantityVal={quantityVal}
+        setQuantityVal={setQuantityVal}
+        categoryVal={categoryVal}
+        setCategoryVal={setCategoryVal}
+        newCategoryVal={newCategoryVal}
+        setNewCategoryVal={setNewCategoryVal}
+        apartmentCategories={apartmentCategories}
+        featuresSupported={featuresSupported}
+        onSubmit={handleAddItem}
+      />
 
-      <div className="list-management">
-        <div className="list-actions-row">
-          <div className="shopping-search-wrap">
-            <IconSearch
-              className="shopping-search-icon"
-              size={18}
-              stroke={1.75}
-            />
-            <input
-              type="search"
-              className="shopping-search"
-              placeholder="חיפוש ברשימה..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="חיפוש"
-            />
-          </div>
-          <button
-            type="button"
-            className="icon-btn"
-            onClick={handleMarkAllBought}
-            disabled={todoItems.length === 0}
-            aria-label="סמן הכל כנקנה"
-            title="סמן הכל כנקנה"
-          >
-            <IconChecks size={18} stroke={1.75} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            className="icon-btn danger"
-            onClick={openBulkDelete}
-            disabled={todoItems.length === 0}
-            aria-label="הסר פריטים מהרשימה"
-            title="הסר פריטים מהרשימה"
-          >
-            <IconTrash size={18} stroke={1.75} aria-hidden="true" />
-          </button>
-        </div>
-
-        {featuresSupported && (
-          <div className="cleanup-settings">
-            <div className="settings-row">
-              <span className="settings-row-label">מחיקה אוטומטית</span>
-              <div className="settings-row-controls">
-                <button
-                  type="button"
-                  className="cleanup-toggle"
-                  role="switch"
-                  aria-checked={cleanupEnabled}
-                  aria-label={
-                    cleanupEnabled
-                      ? 'מחיקה אוטומטית דולקת'
-                      : 'מחיקה אוטומטית כבויה'
-                  }
-                  onClick={handleToggleCleanup}
-                  disabled={savingCleanup}
-                >
-                  <span className="cleanup-toggle-track">
-                    <span className="cleanup-toggle-knob" />
-                  </span>
-                  <span className="cleanup-toggle-text">
-                    {cleanupEnabled ? 'ON' : 'OFF'}
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            {cleanupEnabled && (
-              <div className="settings-row">
-                <label className="cleanup-inline" htmlFor="cleanup-days">
-                  <span>מחק פריטים שנקנו לפני</span>
-                  <input
-                    id="cleanup-days"
-                    type="number"
-                    min="1"
-                    max="90"
-                    className="cleanup-days-input"
-                    value={cleanupDays}
-                    onChange={(e) => setCleanupDays(e.target.value)}
-                  />
-                  <span>ימים</span>
-                </label>
-                <div className="settings-row-controls">
-                  <button
-                    type="button"
-                    className="icon-btn"
-                    onClick={handleSaveCleanupDays}
-                    disabled={savingCleanup}
-                    aria-label="שמור"
-                    title="שמור"
-                  >
-                    <IconCheck size={18} stroke={1.75} aria-hidden="true" />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      <BulkActionsBar
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        todoItemsLength={todoItems.length}
+        onMarkAllBought={handleMarkAllBought}
+        onOpenBulkDelete={openBulkDelete}
+        featuresSupported={featuresSupported}
+        cleanupEnabled={cleanupEnabled}
+        cleanupDays={cleanupDays}
+        setCleanupDays={setCleanupDays}
+        savingCleanup={savingCleanup}
+        onToggleCleanup={handleToggleCleanup}
+        onSaveCleanupDays={handleSaveCleanupDays}
+      />
 
       {!fetchError && (
         <>
@@ -1104,219 +725,46 @@ export default function ShoppingListPage() {
       )}
 
       {bulkDeleteOpen && (
-        <div
-          className="shopping-modal-overlay"
-          onClick={() =>
-            !bulkDeleting && !bulkConfirmOpen && setBulkDeleteOpen(false)
-          }
-        >
-          <div
-            className="shopping-modal-card shopping-modal-card-wide"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="bulk-delete-title"
-          >
-            <h2 id="bulk-delete-title" className="shopping-modal-title">
-              הסרת פריטים מהרשימה
-            </h2>
-            <p className="shopping-modal-hint">
-              בחרו פריטים שטרם נקנו להסרה מהרשימה
-            </p>
-
-            <div className="bulk-select-actions">
-              <button
-                type="button"
-                className="shopping-modal-cancel"
-                onClick={selectAllBulk}
-                disabled={bulkDeleting}
-              >
-                בחר הכל
-              </button>
-              <button
-                type="button"
-                className="shopping-modal-cancel"
-                onClick={clearBulkSelection}
-                disabled={bulkDeleting}
-              >
-                נקה בחירה
-              </button>
-            </div>
-
-            <ul className="bulk-delete-list">
-              {todoItems.map((item) => {
-                const checked = bulkSelectedIds.has(item.id);
-                return (
-                  <li key={item.id}>
-                    <label className="bulk-delete-row">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleBulkId(item.id)}
-                        disabled={bulkDeleting}
-                      />
-                      <span className="bulk-delete-name">
-                        {item.name}
-                        {item.quantity ? ` · ${item.quantity}` : ''}
-                      </span>
-                      <span className="bulk-delete-cat">
-                        {categoryLabel(item.category)}
-                      </span>
-                    </label>
-                  </li>
-                );
-              })}
-            </ul>
-
-            {bulkDeleteError && (
-              <div className="shopping-modal-error">{bulkDeleteError}</div>
-            )}
-
-            <div className="shopping-modal-actions">
-              <button
-                type="button"
-                className="shopping-modal-save shopping-modal-danger"
-                onClick={requestBulkDeleteConfirm}
-                disabled={bulkDeleting || bulkSelectedIds.size === 0}
-              >
-                מחק נבחרים ({bulkSelectedIds.size})
-              </button>
-              <button
-                type="button"
-                className="shopping-modal-cancel"
-                onClick={() => setBulkDeleteOpen(false)}
-                disabled={bulkDeleting}
-              >
-                ביטול
-              </button>
-            </div>
-          </div>
-        </div>
+        <BulkDeleteModal
+          todoItems={todoItems}
+          bulkSelectedIds={bulkSelectedIds}
+          bulkDeleting={bulkDeleting}
+          bulkConfirmOpen={bulkConfirmOpen}
+          bulkDeleteError={bulkDeleteError}
+          onSelectAll={selectAllBulk}
+          onClearSelection={clearBulkSelection}
+          onToggleId={toggleBulkId}
+          onRequestConfirm={requestBulkDeleteConfirm}
+          onClose={() => setBulkDeleteOpen(false)}
+        />
       )}
 
       {bulkConfirmOpen && (
-        <div
-          className="shopping-modal-overlay shopping-modal-overlay-top"
-          onClick={() => !bulkDeleting && setBulkConfirmOpen(false)}
-        >
-          <div
-            className="shopping-modal-card"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="bulk-confirm-title"
-          >
-            <h2 id="bulk-confirm-title" className="shopping-modal-title">
-              אישור מחיקה
-            </h2>
-            <p className="shopping-modal-hint">
-              למחוק {bulkSelectedIds.size} פריטים מהרשימה? פעולה זו אינה ניתנת
-              לביטול.
-            </p>
-            <div className="shopping-modal-actions">
-              <button
-                type="button"
-                className="shopping-modal-save shopping-modal-danger"
-                onClick={handleBulkDeleteConfirm}
-                disabled={bulkDeleting}
-              >
-                {bulkDeleting ? 'מוחק...' : 'מחק'}
-              </button>
-              <button
-                type="button"
-                className="shopping-modal-cancel"
-                onClick={() => setBulkConfirmOpen(false)}
-                disabled={bulkDeleting}
-              >
-                ביטול
-              </button>
-            </div>
-          </div>
-        </div>
+        <BulkConfirmModal
+          selectedCount={bulkSelectedIds.size}
+          bulkDeleting={bulkDeleting}
+          onConfirm={handleBulkDeleteConfirm}
+          onClose={() => setBulkConfirmOpen(false)}
+        />
       )}
 
       {editItem && (
-        <div
-          className="shopping-modal-overlay"
-          onClick={() => !editSaving && setEditItem(null)}
-        >
-          <div
-            className="shopping-modal-card"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="edit-shopping-title"
-          >
-            <h2 id="edit-shopping-title" className="shopping-modal-title">
-              עריכת פריט
-            </h2>
-            <form onSubmit={handleEditSubmit} className="shopping-modal-form">
-              <label className="shopping-field-label" htmlFor="edit-shop-name">
-                שם
-              </label>
-              <input
-                id="edit-shop-name"
-                className="shopping-field-input"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-              />
-
-              <label className="shopping-field-label" htmlFor="edit-shop-qty">
-                כמות
-              </label>
-              <input
-                id="edit-shop-qty"
-                type="number"
-                min="0"
-                step="1"
-                className="shopping-field-input"
-                value={editQuantity}
-                onChange={(e) => setEditQuantity(e.target.value)}
-                disabled={!featuresSupported}
-                placeholder="כמות"
-              />
-
-              <label
-                className="shopping-field-label"
-                htmlFor="edit-shop-category"
-              >
-                קטגוריה
-              </label>
-              <CategorySelect
-                id="edit-shop-category"
-                className="shopping-field-input"
-                categories={apartmentCategories}
-                value={editCategory}
-                onChange={(e) => setEditCategory(e.target.value)}
-                disabled={!featuresSupported}
-                newValue={editNewCategory}
-                onNewValueChange={(e) => setEditNewCategory(e.target.value)}
-              />
-
-              {editError && (
-                <div className="shopping-modal-error">{editError}</div>
-              )}
-
-              <div className="shopping-modal-actions">
-                <button
-                  type="submit"
-                  className="shopping-modal-save"
-                  disabled={editSaving}
-                >
-                  {editSaving ? 'שומר...' : 'שמור'}
-                </button>
-                <button
-                  type="button"
-                  className="shopping-modal-cancel"
-                  onClick={() => setEditItem(null)}
-                  disabled={editSaving}
-                >
-                  ביטול
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <EditItemModal
+          editName={editName}
+          setEditName={setEditName}
+          editQuantity={editQuantity}
+          setEditQuantity={setEditQuantity}
+          editCategory={editCategory}
+          setEditCategory={setEditCategory}
+          editNewCategory={editNewCategory}
+          setEditNewCategory={setEditNewCategory}
+          apartmentCategories={apartmentCategories}
+          featuresSupported={featuresSupported}
+          editError={editError}
+          editSaving={editSaving}
+          onSubmit={handleEditSubmit}
+          onClose={() => setEditItem(null)}
+        />
       )}
     </div>
   );

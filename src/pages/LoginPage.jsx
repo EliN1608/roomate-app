@@ -8,7 +8,7 @@ import './LoginPage.css';
 const ERROR_TOAST_MS = 3500;
 
 export default function LoginPage() {
-  const { refreshApartment, isLoggedIn, hasApartment } = useAuth();
+  const { refreshApartment, isLoggedIn, hasApartment, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('login');
   const [error, setError] = useState('');
@@ -43,12 +43,15 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
+    // Wait until AuthContext finished apartment check — otherwise hasApartment
+    // is still the default false and we flash /onboarding.
+    if (authLoading) return;
     // After signup, auth becomes logged-in before we can set registerSuccess —
     // hold navigation until the success panel is shown / user continues.
     if (isLoggedIn && !isRecovery && !registerSuccess && !holdOnRegisterRef.current) {
       navigate(hasApartment ? '/dashboard' : '/onboarding', { replace: true });
     }
-  }, [isLoggedIn, hasApartment, navigate, isRecovery, registerSuccess]);
+  }, [authLoading, isLoggedIn, hasApartment, navigate, isRecovery, registerSuccess]);
 
   const navigateAfterAuth = async (userId) => {
     holdOnRegisterRef.current = false;
@@ -61,12 +64,13 @@ export default function LoginPage() {
     setError('');
     setSubmitting(true);
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       if (signInError) throw signInError;
-      await navigateAfterAuth(data.user.id);
+      // AuthContext sets loading + resolves apartment once; the effect above
+      // navigates to dashboard/onboarding when that finishes.
     } catch (err) {
       const msg = `${err?.message || ''}`.toLowerCase();
       if (/confirm|not confirmed/.test(msg)) {

@@ -1,11 +1,21 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
 export const AuthContext = createContext();
 
+function AuthBootScreen() {
+  return (
+    <div className="auth-boot-screen" role="status" aria-live="polite">
+      <div className="auth-boot-mark">RooMate</div>
+      <p className="auth-boot-text">טוען...</p>
+    </div>
+  );
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  /** True until session + apartment membership are known (gates all routing). */
   const [loading, setLoading] = useState(true);
   const [apartmentId, setApartmentId] = useState(null);
   const [hasApartment, setHasApartment] = useState(false);
@@ -16,6 +26,7 @@ export function AuthProvider({ children }) {
   const [userRole, setUserRole] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const resolveGen = useRef(0);
 
   const clearApartmentState = () => {
     setApartmentId(null);
@@ -60,7 +71,7 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const checkApartment = async (userId) => {
+  const checkApartment = useCallback(async (userId) => {
     try {
       const { data: rpcRows, error: rpcError } = await supabase.rpc('get_my_apartment');
 
@@ -132,12 +143,17 @@ export function AuthProvider({ children }) {
       clearApartmentState();
       return false;
     }
-  };
+  }, []);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+  /** Resolve user + apartment before clearing loading (single gate for routing). */
+  const resolveAuthSession = useCallback(
+    async (session, { blockUi = true } = {}) => {
+      const gen = ++resolveGen.current;
+      if (blockUi) setLoading(true);
+
       setUser(session?.user ?? null);
       setIsLoggedIn(!!session?.user);
+
       if (session?.user) {
         await Promise.all([
           checkApartment(session.user.id),
@@ -147,28 +163,51 @@ export function AuthProvider({ children }) {
         clearApartmentState();
         clearProfileState();
       }
-      setLoading(false);
-    });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setUser(session?.user ?? null);
-        setIsLoggedIn(!!session?.user);
-        if (session?.user) {
-          await Promise.all([
-            checkApartment(session.user.id),
-            loadProfile(session.user.id, session.user),
-          ]);
-        } else {
-          clearApartmentState();
-          clearProfileState();
-        }
+      // Ignore stale resolves if a newer auth event started
+      if (gen === resolveGen.current) {
         setLoading(false);
       }
-    );
+    },
+    [checkApartment, loadProfile]
+  );
 
-    return () => subscription.unsubscribe();
-  }, [loadProfile]);
+  useEffect(() => {
+    let cancelled = false;
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (cancelled) return;
+      void resolveAuthSession(session, { blockUi: true });
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      // Initial load is handled by getSession — avoid a second apartment fetch / UI flash
+      if (event === 'INITIAL_SESSION') return;
+
+      // Token refresh: keep user in sync, don't re-block the UI or re-query apartment
+      if (event === 'TOKEN_REFRESHED') {
+        setUser(session?.user ?? null);
+        return;
+      }
+
+      // Recovery flow keeps LoginPage mounted (isRecovery local state)
+      if (event === 'PASSWORD_RECOVERY') {
+        setUser(session?.user ?? null);
+        setIsLoggedIn(!!session?.user);
+        return;
+      }
+
+      // SIGNED_IN / SIGNED_OUT / USER_UPDATED — block routing until apartment is known
+      void resolveAuthSession(session, { blockUi: true });
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [resolveAuthSession]);
 
   const login = async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -220,7 +259,7 @@ export function AuthProvider({ children }) {
         },
       }}
     >
-      {!loading && children}
+      {loading ? <AuthBootScreen /> : children}
     </AuthContext.Provider>
   );
 }

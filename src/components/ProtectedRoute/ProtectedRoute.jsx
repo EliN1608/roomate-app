@@ -7,8 +7,10 @@ export default function ProtectedRoute() {
   const location = useLocation();
   const isOnboarding = location.pathname === '/onboarding';
 
+  // AuthProvider already shows a boot screen while loading; keep a guard
+  // so we never route on the default hasApartment=false.
   if (loading) return null;
-  
+
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;
   }
